@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YUK-BELAJAR — Prediksi Semifinal Olimpiade IPA SD/MI</title>
+  
+  <!-- Tailwind CSS CDN (HTTPS) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome CDN (HTTPS) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter, Orbitron, Fredoka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            game: ['Fredoka', 'sans-serif'],
+            tech: ['Orbitron', 'sans-serif']
+          },
+          colors: {
+            labdark: {
+              950: '#030712',
+              900: '#070f24',
+              850: '#0c183d',
+              800: '#112255'
+            },
+            scicyan: {
+              300: '#67e8f9',
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2'
+            },
+            accentgold: '#f59e0b'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070f24;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+      border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0891b2;
+    }
+
+    /* Laboratory Cyber Background */
+    .lab-grid-bg {
+      background-color: #050b1a;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.1) 0%, transparent 45%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    .glass-panel {
+      background: rgba(12, 24, 61, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+    }
+
+    .cyan-glow {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+    }
+
+    .gold-glow {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
+    }
+  </style>
+</head>
+<body class="lab-grid-bg text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-scicyan-500 selection:text-black">
+
+  <!-- ============================================================== -->
+  <!-- 1. AUDIO SYNTHESIS ENGINE (WEB AUDIO API)                      -->
+  <!-- ============================================================== -->
+  <script>
+    const SoundEngine = {
+      audioCtx: null,
+      enabled: true,
+      volume: 0.2,
+
+      init() {
+        if (!this.audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.audioCtx = new AudioContext();
+          }
+        }
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+          this.audioCtx.resume();
+        }
+      },
+
+      playTone(freq, type, duration, delay = 0, volMultiplier = 1) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.audioCtx) return;
+
+        setTimeout(() => {
+          try {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+            
+            const targetVol = this.volume * volMultiplier;
+            gain.gain.setValueAtTime(targetVol, this.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            osc.start();
+            osc.stop(this.audioCtx.currentTime + duration);
+          } catch(e) {}
+        }, delay);
+      },
+
+      click() { this.playTone(880, 'sine', 0.05, 0, 0.5); },
+      select() { this.playTone(540, 'triangle', 0.08, 0, 0.6); },
+      correct() {
+        this.playTone(523.25, 'triangle', 0.12, 0, 0.8);
+        this.playTone(659.25, 'triangle', 0.14, 100, 0.9);
+        this.playTone(783.99, 'sine', 0.25, 200, 1.0);
+        this.playTone(1046.50, 'sine', 0.35, 320, 1.1);
+      },
+      wrong() {
+        this.playTone(280, 'sawtooth', 0.16, 0, 0.7);
+        this.playTone(210, 'sawtooth', 0.25, 120, 0.8);
+      },
+      pause() {
+        this.playTone(440, 'sine', 0.1, 0, 0.5);
+        this.playTone(330, 'sine', 0.15, 80, 0.5);
+      },
+      resume() {
+        this.playTone(330, 'sine', 0.1, 0, 0.5);
+        this.playTone(440, 'sine', 0.15, 80, 0.5);
+      },
+      fanfare() {
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        notes.forEach((f, idx) => {
+          this.playTone(f, 'triangle', 0.35, idx * 110, 0.8);
+        });
+      }
+    };
+  </script>
+
+  <!-- ============================================================== -->
+  <!-- 2. MASTER QUESTION BANK (EXACT 2 PACKAGES X 40 QUESTIONS)      -->
+  <!-- ============================================================== -->
+  <script>
+    window.RAW_BANK_PREDIKSI_SEMI = {
+      1: [
+        { questionId: "p1_q1", packageId: 1, questionNumber: 1, type: "Hayati", topic: "Metode Ilmiah Fotosintesis", questionText: "Seorang siswa melakukan eksperimen untuk menguji faktor pembatas fotosintesis pada tanaman air Hydrilla verticillata. Perangkat diletakkan pada jarak 20 cm dari lampu LED 20 Watt, dan ke dalam air ditambahkan 2 gram natrium bikarbonat (NaHCO₃). Setelah 10 menit, gelembung gas yang muncul pada corong kaca dihitung. Jika siswa tersebut ingin membuktikan bahwa konsentrasi gas karbon dioksida merupakan variabel bebas yang memengaruhi laju fotosintesis, perlakuan yang tepat pada tabung eksperimen pembanding adalah ...", options: { A: "Mengubah jarak lampu menjadi 50 cm dengan jumlah NaHCO₃ tetap 2 gram", B: "Menjaga jarak lampu tetap 20 cm dan menambahkan NaHCO₃ sebanyak 5 gram", C: "Mengganti jenis tanaman air lain tanpa menambahkan NaHCO₃", D: "Menaikkan suhu air dari 25°C menjadi 50°C pada jarak lampu yang sama" }, correctAnswer: "B", explanation: "Dalam metode ilmiah, jika yang diuji sebagai variabel bebas adalah konsentrasi CO₂ (dari NaHCO₃), maka faktor lain (jarak lampu/intensitas, suhu, jenis tanaman) wajib dijadikan variabel kontrol (tetap). Satu-satunya yang divariasikan adalah dosis NaHCO₃." },
+        { questionId: "p1_q2", packageId: 1, questionNumber: 2, type: "Fisik", topic: "Mekanika Katrol Majemuk", questionText: "Sebuah peti peralatan laboratorium bermassa 60 kg (g = 10 m/s²) diangkat ke lantai dua menggunakan sistem katrol majemuk yang tersusun atas dua katrol tetap dan dua katrol bergerak. Jika tali yang ditarik pekerja mengalami gaya gesekan dengan poros katrol sebesar 20 N, gaya kuasa minimum yang harus dikerahkan oleh pekerja tersebut untuk mengangkat peti secara perlahan adalah ...", options: { A: "130 N", B: "150 N", C: "170 N", D: "300 N" }, correctAnswer: "C", explanation: "Berat beban W = m·g = 60 × 10 = 600 N. Keuntungan mekanis katrol majemuk 4 roda KM = 4. Gaya ideal = W / 4 = 150 N. Karena ada gaya gesekan poros 20 N, maka gaya kuasa riil F = 150 + 20 = 170 N." },
+        { questionId: "p1_q3", packageId: 1, questionNumber: 3, type: "Hayati", topic: "Ekologi & Biomagnifikasi", questionText: "Di sebuah perairan muara dekat kawasan industri, ditemukan limbah logam berat merkuri cair yang sulit terurai secara hayati. Di muara tersebut terdapat rantai makanan: Fitoplankton → Zooplankton → Udang Rawa → Ikan Bandeng → Burung Elang Laut. Berdasarkan fenomena biomagnifikasi (pemekatan hayati), konsentrasi akumulasi merkuri paling tinggi per gram jaringan tubuh akan ditemukan pada ...", options: { A: "Fitoplankton, karena menyerap langsung merkuri dari air tercemar", B: "Udang Rawa, karena memakan zooplankton dan menyaring lumpur", C: "Ikan Bandeng, karena memiliki massa tubuh paling gemuk", D: "Burung Elang Laut, karena menempati tingkat trofik tertinggi" }, correctAnswer: "D", explanation: "Logam berat merkuri bersifat persisten dan larut dalam lemak tubuh. Konsentrasinya berlipat ganda pada setiap kenaikan tingkat trofik (biomagnifikasi), sehingga predator puncak (Burung Elang Laut) menampung konsentrasi racun tertinggi." },
+        { questionId: "p1_q4", packageId: 1, questionNumber: 4, type: "Fisik", topic: "Termodinamika Asas Black", questionText: "Sebanyak 200 gram air bersuhu 80°C dituangkan ke dalam wadah isolator yang berisi 300 gram air bersuhu 20°C. Jika kalor jenis air bernilai 1 kal/g°C dan kalor yang diserap oleh dinding wadah diabaikan, maka suhu kesetimbangan termal akhir campuran tersebut adalah ...", options: { A: "44°C", B: "50°C", C: "56°C", D: "60°C" }, correctAnswer: "A", explanation: "Asas Black: Q_lepas = Q_terima → 200 · 1 · (80 - Tc) = 300 · 1 · (Tc - 20) → 2(80 - Tc) = 3(Tc - 20) → 160 - 2Tc = 3Tc - 60 → 5Tc = 220 → Tc = 44°C." },
+        { questionId: "p1_q5", packageId: 1, questionNumber: 5, type: "Hayati", topic: "Fisiologi Sel & Plasmolisis", questionText: "Potongan silinder kentang segar dengan massa awal 10,0 gram direndam ke dalam larutan garam pekat berkonsentrasi 20% selama 60 menit. Ketika diangkat dan ditimbang kembali, massanya berkurang menjadi 7,8 gram serta teksturnya menjadi lunak/lembek. Penjelasan seluler yang tepat mengenai peristiwa ini adalah ...", options: { A: "Air dari dalam sel kentang berosmosis keluar menuju larutan garam hipertonik, memicu peristiwa plasmolisis", B: "Garam dari larutan luar berdifusi masuk ke dalam sel kentang sehingga merusak sitoplasma", C: "Larutan garam bersifat hipotonik sehingga vakuola sel kentang mengalami lisis", D: "Tekanan turgor sel kentang meningkat pesat akibat penyerapan ion natrium" }, correctAnswer: "A", explanation: "Larutan garam 20% bersifat hipertonik. Air di dalam vakuola dan sitoplasma sel kentang keluar secara osmosis melintasi membran semipermeabel, menyebabkan lepasnya membran plasma dari dinding sel (plasmolisis) dan penurunan turgor sel." },
+        { questionId: "p1_q6", packageId: 1, questionNumber: 6, type: "Fisik", topic: "Optik Cermin Cekung", questionText: "Sebuah lilin diletakkan di depan cermin cekung pada jarak 15 cm. Jika jari-jari kelengkungan cermin tersebut (R) adalah 20 cm, maka sifat bayangan yang terbentuk pada layar penangkap adalah ...", options: { A: "Nyata, tegak, diperkecil", B: "Maya, tegak, diperbesar", C: "Nyata, terbalik, diperbesar", D: "Nyata, terbalik, sama besar" }, correctAnswer: "C", explanation: "Jarak fokus f = R/2 = 10 cm. Posisi s = 15 cm (Ruang II). 1/s' = 1/10 - 1/15 = 1/30 → s' = +30 cm (Ruang III, nyata di depan cermin). Perbesaran M = 30/15 = 2× (diperbesar dan terbalik)." },
+        { questionId: "p1_q7", packageId: 1, questionNumber: 7, type: "Hayati", topic: "Fisiologi Sirkulasi Aorta", questionText: "Seorang pelari maraton yang telah menyelesaikan lomba diukur denyut nadinya mencapai 140 denyutan per menit. Pada saat yang sama, ventrikel kiri jantung memompa darah dengan tekanan tinggi menuju pembuluh darah utama (aorta). Karakteristik struktur pembuluh aorta yang memungkinkannya menahan lonjakan tekanan hidrostatik darah tersebut adalah ...", options: { A: "Memiliki dinding yang tipis, tidak berotot, dan memiliki banyak katup di sepanjang salurannya", B: "Memiliki lapisan dinding tebal, elastis, berotot polos tebal, dan aliran darahnya meninggalkan jantung", C: "Memiliki lumen yang sangat lebar dan bertekanan sangat rendah mendekati nol", D: "Memiliki selapis sel endotelium permeabel untuk mempermudah pertukaran gas" }, correctAnswer: "B", explanation: "Arteri utama aorta menerima semburan darah bertekanan tinggi dari ventrikel kiri. Dindingnya tersusun atas serat elastin tebal dan otot polos kokoh untuk meregang menahan lonjakan tekanan tanpa pecah." },
+        { questionId: "p1_q8", packageId: 1, questionNumber: 8, type: "Fisik", topic: "Rangkaian Hambatan Campuran", questionText: "Tiga buah resistor masing-masing R₁ = 6 Ω, R₂ = 12 Ω, dan R₃ = 4 Ω dirangkai sedemikian rupa: R₁ dan R₂ dipasang secara paralel, kemudian ujung gabungannya dihubungkan secara seri dengan R₃. Rangkaian tersebut dihubungkan ke sumber tegangan baterai ideal 16 Volt. Kuat arus listrik total yang mengalir keluar dari baterai adalah ...", options: { A: "1 Ampere", B: "2 Ampere", C: "3 Ampere", D: "4 Ampere" }, correctAnswer: "B", explanation: "Hambatan paralel: 1/Rp = 1/6 + 1/12 = 3/12 → Rp = 4 Ω. Hambatan total = Rp + R₃ = 4 + 4 = 8 Ω. Arus total I = V / Rtot = 16 / 8 = 2 Ampere." },
+        { questionId: "p1_q9", packageId: 1, questionNumber: 9, type: "Hayati", topic: "Homeostasis & Vasokonstriksi", questionText: "Pada saat seseorang melakukan pendakian gunung di wilayah yang bersuhu sangat dingin (5°C), frekuensi pengeluaran urine (buang air kecil) cenderung meningkat drastis dibandingkan saat berada di pantai yang terik. Mekanisme fisiologis tubuh yang mendasari fenomena ini adalah ...", options: { A: "Pembuluh darah kulit menyempit (vasokonstriksi) sehingga pengeluaran keringat minim dan kelebihan cairan dialihkan ke ginjal", B: "Kelenjar keringat bekerja lebih aktif untuk membuang kelebihan garam tubuh", C: "Tubuh mengalami dehidrasi sehingga hormon antidiuretik (ADH) disekresi berlebihan", D: "Glomerulus ginjal mengalami penurunan laju filtrasi darah" }, correctAnswer: "A", explanation: "Di udara dingin, pembuluh darah perifer menyempit (vasokonstriksi) untuk menghemat panas sehingga produksi keringat berhenti. Volume darah sentral meningkat, sekresi ADH ditekan, dan ginjal membuang kelebihan cairan sebagai urine encer." },
+        { questionId: "p1_q10", packageId: 1, questionNumber: 10, type: "Fisik", topic: "Struktur Atom & Ion Natrium", questionText: "Suatu atom netral unsur Natrium (Na) memiliki nomor atom 11 dan nomor massa 23. Jika atom Natrium tersebut melepaskan 1 elektron pada kulit terluarnya untuk mencapai kestabilan susunan gas mulia, maka partikel ion Na⁺ yang terbentuk memiliki komposisi subatomik ...", options: { A: "11 proton, 12 neutron, dan 10 elektron", B: "10 proton, 12 neutron, dan 11 elektron", C: "11 proton, 11 neutron, dan 10 elektron", D: "12 proton, 11 neutron, dan 11 elektron" }, correctAnswer: "A", explanation: "Nomor atom Z = 11 (11 proton). Neutron = A - Z = 23 - 11 = 12 neutron. Ion Na⁺ melepas 1 elektron: elektron tersisa = 11 - 1 = 10 elektron." },
+        { questionId: "p1_q11", packageId: 1, questionNumber: 11, type: "Hayati", topic: "Adaptasi Kaktus Gurun", questionText: "Tumbuhan kaktus (Opuntia) yang hidup di ekosistem gurun tandus memiliki daun yang tereduksi menjadi duri tajam, batang yang tebal dan berdaging (sukulen) dilapisi lapisan kutikula lilin tebal, serta sistem akar yang menyebar luas. Modifikasi daun menjadi bentuk duri tersebut secara fisiologis berfungsi untuk ...", options: { A: "Menghasilkan glukosa melalui fotosintesis pengganti batang", B: "Memperkecil luas bidang penguapan air (transpirasi) dan melindungi diri dari herbivora", C: "Menyerap uap air langsung dari udara malam hari secara difusi", D: "Mempercepat laju respirasi seluler pada siang hari" }, correctAnswer: "B", explanation: "Mereduksi helai daun menjadi duri bertujuan meminimalkan luas bidang penguapan air (transpirasi) di iklim gurun terik, serta melindungi cadangan air batang dari herbivor." },
+        { questionId: "p1_q12", packageId: 1, questionNumber: 12, type: "Fisik", topic: "Resonansi Bunyi Tabung", questionText: "Sebuah garputala dengan frekuensi getar 340 Hz digetarkan di atas mulut tabung kaca yang berisi air. Kecepatan rambat bunyi di udara saat itu adalah 340 m/s. Panjang kolom udara minimum di atas permukaan air agar terjadi peristiwa resonansi pertama (suara terdengar mendengung paling keras) adalah ...", options: { A: "10 cm", B: "25 cm", C: "50 cm", D: "100 cm" }, correctAnswer: "B", explanation: "Panjang gelombang λ = v / f = 340 / 340 = 1 meter = 100 cm. Resonansi pertama tabung tertutup L₁ = 1/4 λ = 1/4 × 100 cm = 25 cm." },
+        { questionId: "p1_q13", packageId: 1, questionNumber: 13, type: "Hayati", topic: "Piramida Aliran Energi", questionText: "Dalam sebuah ekosistem padang rumput yang stabil, energi kimia yang dihasilkan oleh rumput sebagai produsen primer tercatat sebesar 50.000 kkal. Berdasarkan Hukum Lindeman (hukum transfer energi 10% antar-tingkat trofik), perkiraan jumlah energi yang berhasil ditransformasikan menjadi biomassa jaringan tubuh pada konsumen sekunder (karnivora pemakan herbivora) adalah ...", options: { A: "5.000 kkal", B: "1.000 kkal", C: "500 kkal", D: "50 kkal" }, correctAnswer: "C", explanation: "Trofik I (Rumput) = 50.000 kkal. Trofik II (Konsumen primer) = 10% × 50.000 = 5.000 kkal. Trofik III (Konsumen sekunder) = 10% × 5.000 = 500 kkal." },
+        { questionId: "p1_q14", packageId: 1, questionNumber: 14, type: "Fisik", topic: "Aturan Tahun Kabisat", questionText: "Bumi memerlukan waktu sekitar 365,2422 hari untuk sekali berevolusi mengitari Matahari (tahun tropis). Untuk menyelaraskan penanggalan masehi dengan siklus musim astronomis, diberlakukan aturan tahun kabisat (penambahan 1 hari pada bulan Februari). Berdasarkan aturan kalender Gregorian, di antara tahun-tahun berikut yang bukan merupakan tahun kabisat adalah ...", options: { A: "Tahun 2000", B: "Tahun 2024", C: "Tahun 2100", D: "Tahun 2400" }, correctAnswer: "C", explanation: "Tahun kelipatan abad (berakhiran 00) hanya menjadi kabisat jika habis dibagi 400. Tahun 2000 dan 2400 habis dibagi 400 (kabisat). Tahun 2100 habis dibagi 100 namun tidak habis dibagi 400 (bukan kabisat)." },
+        { questionId: "p1_q15", packageId: 1, questionNumber: 15, type: "Hayati", topic: "Denaturasi Enzim Katalase", questionText: "Ekstrak hati ayam dimasukkan ke dalam tabung reaksi yang berisi larutan hidrogen peroksida (H₂O₂). Seketika timbul gelembung gas melimpah yang saat diuji dengan bara lidi menyala terang. Namun, jika ekstrak hati tersebut direbus terlebih dahulu hingga mendidih sebelum dicampurkan ke larutan H₂O₂, tidak muncul gelembung sama sekali. Penyebab ketiadaan gelembung setelah pemanasan adalah ...", options: { A: "Enzim katalase mengalami denaturasi kerusakan struktur protein akibat suhu tinggi", B: "Hidrogen peroksida berubah menjadi asam pekat yang mematikan enzim", C: "Perebusan mengubah gas oksigen menjadi karbon dioksida", D: "Substrat hidrogen peroksida habis menguap saat terkena uap air mendidih" }, correctAnswer: "A", explanation: "Enzim katalase adalah biomolekul protein. Perebusan suhu tinggi merusak ikatan tersier konformasi sisi aktif enzim (denaturasi termal permanen) sehingga tidak mampu lagi memecah H₂O₂." },
+        { questionId: "p1_q16", packageId: 1, questionNumber: 16, type: "Fisik", topic: "Hukum Archimedes Terapung", questionText: "Sebuah balok kayu bervolume 0,05 m³ terapung di permukaan air tawar (ρ_air = 1.000 kg/m³). Jika volume balok yang terbenam di bawah permukaan air adalah tiga perempat (3/4) dari total volume baloknya, maka massa jenis balok kayu tersebut adalah ...", options: { A: "250 kg/m³", B: "500 kg/m³", C: "750 kg/m³", D: "1.000 kg/m³" }, correctAnswer: "C", explanation: "Benda terapung: ρ_benda · V_total = ρ_cairan · V_celup → ρ_benda = 1.000 × (3/4) = 750 kg/m³." },
+        { questionId: "p1_q17", packageId: 1, questionNumber: 17, type: "Hayati", topic: "Totipotensi Kultur Jaringan", questionText: "Dalam pemuliaan tanaman pertanian modern, para peneliti sering memanfaatkan teknik kultur jaringan. Potongan kecil jaringan daun (eksplan) ditumbuhkan secara aseptik dalam cawan petri berisi medium agar yang kaya hormon auksin dan sitokinin hingga terbentuk kalus dan tanaman baru (planlet). Dasar sifat seluler tumbuhan yang memungkinkan teknik perbanyakan ini berhasil adalah ...", options: { A: "Spesialisasi jaringan vaskular yang irreversibel", B: "Sifat totipotensi sel yang mampu membelah dan berdiferensiasi membentuk individu utuh", C: "Ketergantungan sel somatic terhadap proses fertilisasi serbuk sari", D: "Kemampuan sel membentuk dinding sekunder dari zat lignin" }, correctAnswer: "B", explanation: "Totipotensi seluler adalah potensi genetik sel hidup tumbuhan untuk membelah, beregenerasi, dan berdiferensiasi kembali membentuk seluruh organ tanaman utuh dalam lingkungan nutrisi yang terkontrol." },
+        { questionId: "p1_q18", packageId: 1, questionNumber: 18, type: "Fisik", topic: "Gaya Lorentz Kawat", questionText: "Kawat penghantar lurus sepanjang 50 cm dibentangkan tegak lurus di dalam medan magnet homogen sebesar 4 Tesla. Jika kawat tersebut dialiri arus listrik searah sebesar 3 Ampere, maka besar gaya magnet (gaya Lorentz) yang dialami kawat tersebut adalah ...", options: { A: "3 Newton", B: "6 Newton", C: "12 Newton", D: "60 Newton" }, correctAnswer: "B", explanation: "F = B · I · L · sin 90° = 4 × 3 × 0,5 × 1 = 6 Newton." },
+        { questionId: "p1_q19", packageId: 1, questionNumber: 19, type: "Hayati", topic: "Mekanisme Gerak Refleks", questionText: "Ketika ujung jari seseorang tanpa sengaja menyentuh wajan panas, tangannya langsung ditarik menjauh secara kilat sebelum ia sempat menyadari rasa sakitnya. Jalur transmisi impuls saraf yang benar pada gerak refleks penarikan tangan tersebut adalah ...", options: { A: "Reseptor kulit → saraf sensorik → otak besar → saraf motorik → otot lengan", B: "Reseptor kulit → saraf motorik → sumsum tulang belakang → saraf sensorik → otot lengan", C: "Reseptor kulit → saraf sensorik → interneuron sumsum tulang belakang → saraf motorik → otot lengan", D: "Otot lengan → saraf motorik → saraf sensorik → otak kecil → reseptor kulit" }, correctAnswer: "C", explanation: "Gerak refleks menghindari cedera melewati lengkung refleks: Reseptor kulit → Neuron sensorik (aferen) → Interneuron di sumsum tulang belakang → Neuron motorik (eferen) → Efektor (otot lengan). Sinyal sadar ke otak baru diproses setelahnya." },
+        { questionId: "p1_q20", packageId: 1, questionNumber: 20, type: "Fisik", topic: "Kekekalan Energi Mekanik", questionText: "Sebuah bola besi bermassa 2 kg jatuh bebas dari tepi gedung berketinggian 20 meter di atas tanah (g = 10 m/s²). Abaikan hambatan udara. Besar energi kinetik bola saat berada pada ketinggian 5 meter dari atas tanah adalah ...", options: { A: "100 Joule", B: "200 Joule", C: "300 Joule", D: "400 Joule" }, correctAnswer: "C", explanation: "EM = m·g·h₁ = 2 × 10 × 20 = 400 J. Pada h₂ = 5 m, Ep₂ = 2 × 10 × 5 = 100 J. Maka Ek₂ = EM - Ep₂ = 400 - 100 = 300 Joule." },
+        { questionId: "p1_q21", packageId: 1, questionNumber: 21, type: "Hayati", topic: "Daya Isap Daun & Xilem", questionText: "Air dan mineral dari dalam tanah dapat naik mencapai pucuk pohon sequoia yang tingginya lebih dari 80 meter melawan gaya gravitasi bumi. Faktor penentu yang paling dominan dalam menarik kolom air tak terputus dari akar hingga ke daun tertinggi adalah ...", options: { A: "Tekanan pompa hidrolik pada tudung akar", B: "Tarikan daya isap daun akibat peristiwa transpirasi dan gaya kohesi-adhesi molekul air", C: "Pembelahan aktif sel-sel kambium gabus batang", D: "Perbedaan suhu antara dasar tanah dan udara puncak pohon" }, correctAnswer: "B", explanation: "Teori adhesi-kohesi Dixon-Joly: hilangnya molekul air akibat transpirasi di stomata menimbulkan tegangan negatif (daya isap daun), menarik kolom air xilem yang tersambung utuh oleh ikatan kohesi antarmolekul air." },
+        { questionId: "p1_q22", packageId: 1, questionNumber: 22, type: "Fisik", topic: "Pemantulan Total Serat Optik", questionText: "Kabel serat optik (fiber optic) mampu mentransmisikan data sinyal internet kecepatan tinggi berupa berkas cahaya melintasi benua tanpa kehilangan energi radiasi yang berarti. Prinsip optika fisika yang diterapkan pada inti kaca serat optik tersebut adalah ...", options: { A: "Difraksi celah tunggal gelombang elektromagnetik", B: "Pemantulan internal total (total internal reflection) yang terjadi karena sudut datang lebih besar daripada sudut kritis", C: "Pembiasan mendekati garis normal saat berpindah ke medium yang lebih renggang", D: "Polarisasi linear oleh filter kristal birefringent" }, correctAnswer: "B", explanation: "Berkas cahaya masuk ke dalam inti kaca dengan sudut datang melebihi sudut kritis (i > θc), sehingga cahaya mengalami pemantulan internal total berulang kali tanpa keluar menembus selubung kaca." },
+        { questionId: "p1_q23", packageId: 1, questionNumber: 23, type: "Hayati", topic: "Suksesi Primer Batuan Beku", questionText: "Ketika letusan dahsyat gunung berapi menutupi seluruh kawasan lereng dengan aliran lava cair panas, seluruh vegetasi dan tanah subur musnah menyisakan hamparan batuan beku yang tandus. Urutan kemunculan koloni organisme perintis hingga terbentuk vegetasi hutan klimaks dalam suksesi primer tersebut adalah ...", options: { A: "Lumut kerak (Lichen) → Lumut daun → Rumput & semak → Pohon hutan", B: "Rumput ilalang → Tumbuhan paku → Lumut kerak → Pohon pinus", C: "Pohon perdu → Jamur saprofit → Tumbuhan paku → Lumut kerak", D: "Tumbuhan paku → Lumut daun → Alga hijau → Pohon jati" }, correctAnswer: "A", explanation: "Lichen (lumut kerak) mengkolonisasi batuan tandus dan mengeluarkan asam pelapuk batu. Setelah terbentuk lapisan tanah primitif, spora lumut daun tumbuh, disusul rumput/semak, hingga akhirnya pohon hutan klimaks." },
+        { questionId: "p1_q24", packageId: 1, questionNumber: 24, type: "Fisik", topic: "Senyawa Kovalen Air", questionText: "Molekul air (H₂O) tersusun atas dua atom Hidrogen dan satu atom Oksigen. Berdasarkan pembagian jenis partikel materi, air digolongkan sebagai senyawa kovalen karena ...", options: { A: "Terbentuk dari penggabungan unsur-unsur secara fisik tanpa perbandingan massa tetap", B: "Terbentuk melalui pemakaian bersama pasangan elektron antar-unsur nonlogam dengan perbandingan massa tertentu", C: "Memiliki sifat komponen penyusun yang masih identik dengan gas hidrogen dan gas oksigen murni", D: "Dapat dipisahkan menjadi gas penyusunnya hanya melalui proses filtrasi fisik" }, correctAnswer: "B", explanation: "Air adalah senyawa kovalen polar yang terbentuk dari pemakaian bersama pasangan elektron antar-unsur non-logam (H dan O) dengan perbandingan massa tetap (Hukum Proust)." },
+        { questionId: "p1_q25", packageId: 1, questionNumber: 25, type: "Hayati", topic: "Fisiologi Tekanan Diastol", questionText: "Pada pemeriksaan tekanan darah menggunakan tensimeter, seorang dokter mencatat angka tekanan darah atlet adalah 120/80 mmHg. Makna fisiologis dari angka 80 mmHg (tekanan diastol) adalah ...", options: { A: "Tekanan darah saat bilik kiri jantung berkontraksi memompa darah ke seluruh tubuh", B: "Tekanan darah terendah di dinding arteri ketika bilik jantung berelaksasi dan terisi darah kembali", C: "Tekanan hidrostatik darah di dalam pembuluh balik (vena kava)", D: "Tekanan darah di dalam pembuluh kapiler paru-paru saat difusi gas" }, correctAnswer: "B", explanation: "120 mmHg adalah tekanan sistol (kontraksi ventrikel). 80 mmHg adalah tekanan diastol, yaitu tekanan terendah di dinding arteri saat ventrikel berelaksasi dan ruang jantung terisi darah kembali." },
+        { questionId: "p1_q26", packageId: 1, questionNumber: 26, type: "Fisik", topic: "Seismologi Hukum Laska", questionText: "Stasiun BMKG mendeteksi adanya getaran gempa bumi tektonik. Sensor seismograf mencatat gelombang primer (gelombang P) tiba pada pukul 08.15.20 WIB, sedangkan gelombang sekunder (gelombang S) tiba pada pukul 08.18.50 WIB. Berdasarkan Hukum Laska, jarak episentrum pusat gempa dari stasiun pemantau tersebut adalah ...", options: { A: "1.500 km", B: "2.500 km", C: "3.500 km", D: "4.500 km" }, correctAnswer: "B", explanation: "Selisih waktu (S - P) = 08.18.50 - 08.15.20 = 3 menit 30 detik = 3,5 menit. Rumus Laska: Δ = ((S - P) - 1 menit) × 1.000 km = (3,5 - 1) × 1.000 = 2.500 km." },
+        { questionId: "p1_q27", packageId: 1, questionNumber: 27, type: "Hayati", topic: "Simbiosis Rhizobium Legum", questionText: "Tanaman kacang-kacangan (Fabaceae) mampu tumbuh subur pada tanah tandus yang miskin hara nitrogen karena bersimbiosis dengan bakteri Rhizobium leguminosarum pada bintil akarnya. Peran utama bakteri tersebut dalam daur nitrogen adalah ...", options: { A: "Mengubah nitrat di dalam tanah menjadi gas nitrogen bebas di atmosfer", B: "Memfiksasi gas nitrogen (N₂) bebas dari udara menjadi senyawa amonia/amonium yang dapat diserap tumbuhan", C: "Menguraikan selulosa kayu lapuk menjadi gula sederhana", D: "Membunuh jamur parasit di perakaran tanaman" }, correctAnswer: "B", explanation: "Bakteri Rhizobium memiliki enzim nitrogenase pemfiksasi gas N₂ inert dari udara menjadi senyawa amonium/nitrat terlarut yang dapat diserap tanaman untuk membentuk asam amino." },
+        { questionId: "p1_q28", packageId: 1, questionNumber: 28, type: "Fisik", topic: "Tekanan Mutlak Penyelam", questionText: "Seorang penyelam menyelam di laut hingga kedalaman 15 meter di bawah permukaan air laut (ρ_laut = 1.030 kg/m³, g = 10 m/s²). Jika tekanan udara di atas permukaan laut adalah 100.000 Pa, maka tekanan mutlak total yang dirasakan oleh gendang telinga penyelam tersebut adalah ...", options: { A: "154.500 Pa", B: "254.500 Pa", C: "354.500 Pa", D: "514.500 Pa" }, correctAnswer: "B", explanation: "Tekanan hidrostatis Ph = ρ·g·h = 1.030 × 10 × 15 = 154.500 Pa. Tekanan mutlak = P_atm + Ph = 100.000 + 154.500 = 254.500 Pa." },
+        { questionId: "p1_q29", packageId: 1, questionNumber: 29, type: "Hayati", topic: "Kacamata Rabun Jauh Miopi", questionText: "Seseorang yang menderita kelainan mata miopi (rabun jauh) tidak dapat melihat benda-benda jauh secara jelas karena bayangan benda jatuh di depan retina. Untuk membantu penderita miopi agar bayangan benda jauh dapat jatuh tepat pada retina, dokter mata memberikan kacamata berlensa ...", options: { A: "Cembung (positif), yang bersifat mengumpulkan sinar (konvergen)", B: "Cekung (negatif), yang membiaskan sinar menyebar (divergen) sebelum masuk ke lensa mata", C: "Silindris, untuk menyatukan dua titik fokus yang terbelah", D: "Datar, untuk memperbesar sudut penglihatan" }, correctAnswer: "B", explanation: "Mata miopi memfokuskan bayangan benda jauh di depan retina. Lensa cekung (divergen) menyebarkan berkas sinar terlebih dahulu sehingga bayangan dapat mundur dan terfokus tepat di bintik kuning retina." },
+        { questionId: "p1_q30", packageId: 1, questionNumber: 30, type: "Fisik", topic: "Pelepasan Gas Permafrost", questionText: "Mencairnya lapisan tanah beku abadi (permafrost) di kawasan kutub utara akibat pemanasan global dikhawatirkan para ilmuwan dapat memicu umpan balik positif (positive feedback loop) yang mempercepat krisis iklim global. Hal ini terjadi karena lapisan permafrost yang mencair akan ...", options: { A: "Menyerap seluruh gas karbon dioksida dari atmosfer secara instan", B: "Melepaskan miliaran ton gas metana (CH₄) dan CO₂ hasil dekomposisi bahan organik purba yang selama ini terperangkap es", C: "Menurunkan permukaan air laut secara drastis di kawasan ekuator", D: "Menghilangkan lapisan ozon di stratosfer secara total" }, correctAnswer: "B", explanation: "Permafrost menyimpan sisa materi organik beku. Saat mencair, mikroba mendekomposisi materi purba tersebut secara anaerob, melepaskan miliaran ton gas rumah kaca metana (CH₄) yang memperparah pemanasan bumi." },
+        { questionId: "p1_q31", packageId: 1, questionNumber: 31, type: "Hayati", topic: "Persilangan Dihibrid Mendel", questionText: "Disilangkan tanaman kacang kapri berbiji bulat-kuning heterozigot ganda (BbKk) dengan sesamanya. Diketahui sifat biji bulat (B) dominan terhadap biji keriput (b), dan warna kuning (K) dominan terhadap warna hijau (k). Berapakah perbandingan fenotipe keturunan yang memiliki sifat biji bulat-hijau?", options: { A: "9/16", B: "3/16", C: "1/16", D: "3/4" }, correctAnswer: "B", explanation: "Persilangan dihibrid heterozigot BbKk × BbKk menghasilkan rasio fenotipe 9 (Bulat Kuning) : 3 (Bulat Hijau) : 3 (Keriput Kuning) : 1 (Keriput Hijau). Peluang bulat-hijau (B_kk) adalah 3/16." },
+        { questionId: "p1_q32", packageId: 1, questionNumber: 32, type: "Fisik", topic: "Pemuaian Alkohol Bejana Kaca", questionText: "Sebuah bejana kaca bervolume 1.000 cm³ diisi penuh alkohol pada suhu 20°C. Koefisien muai panjang kaca adalah 9 × 10⁻⁶/°C dan koefisien muai volume alkohol adalah 1,1 × 10⁻³/°C. Jika bejana beserta isinya dipanaskan hingga suhunya mencapai 70°C, volume alkohol yang tumpah dari bejana adalah ...", options: { A: "53,65 cm³", B: "55,00 cm³", C: "56,35 cm³", D: "60,00 cm³" }, correctAnswer: "A", explanation: "ΔT = 50°C. γ_kaca = 3 × 9×10⁻⁶ = 27×10⁻⁶/°C = 0,027×10⁻³/°C. Selisih koefisien muai volume = (1,1 - 0,027)×10⁻³ = 1,073×10⁻³/°C. Volume tumpah = 1.000 × (1,073×10⁻³) × 50 = 53,65 cm³." },
+        { questionId: "p1_q33", packageId: 1, questionNumber: 33, type: "Hayati", topic: "Fermentasi Ragi Tapai", questionText: "Pada pembuatan tapai singkong, ragi Saccharomyces cerevisiae dicampurkan ke dalam wadah tertutup kedap udara. Proses fermentasi alkohol ini menghasilkan energi, senyawa etanol, dan buih gas yang menyebabkan wadah menggelembung. Persamaan reaksi kimia sederhana untuk proses respirasi anaerob tersebut adalah ...", options: { A: "C₆H₁₂O₆ → 2C₂H₅OH + 2CO₂ + Energi", B: "C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + Energi", C: "6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂", D: "C₆H₁₂O₆ → 2CH₃CHOHCOOH + Energi" }, correctAnswer: "A", explanation: "Fermentasi alkohol oleh ragi: 1 mol glukosa dipecah tanpa oksigen menjadi 2 mol etanol (C₂H₅OH), 2 mol gas karbon dioksida (CO₂), dan energi ATP." },
+        { questionId: "p1_q34", packageId: 1, questionNumber: 34, type: "Fisik", topic: "Hukum II Newton & Gesekan", questionText: "Sebuah balok kayu bermassa 5 kg berada di atas lantai mendatar kasar dengan koefisien gesekan kinetik μk = 0,2. Balok tersebut ditarik ke kanan dengan gaya konstan mendatar sebesar 25 N (g = 10 m/s²). Percepatan gerak yang dialami balok tersebut adalah ...", options: { A: "2 m/s²", B: "3 m/s²", C: "4 m/s²", D: "5 m/s²" }, correctAnswer: "B", explanation: "Gaya normal N = m·g = 50 N. Gaya gesek kinetik fk = 0,2 × 50 = 10 N. Resultan gaya ΣF = 25 - 10 = 15 N. Percepatan a = ΣF / m = 15 / 5 = 3 m/s²." },
+        { questionId: "p1_q35", packageId: 1, questionNumber: 35, type: "Hayati", topic: "Simbiosis Anemon & Ikan Badut", questionText: "Ikan badut (Amphiprioninae) hidup berlindung di antara tentakel anemon laut yang beracun. Tubuh ikan badut memiliki lapisan lendir khusus yang membuatnya kebal terhadap sengatan nematosista anemon, sementara kehadiran ikan badut membersihkan kotoran dan menarik mangsa bagi anemon. Bentuk interaksi simbiosis antara kedua organisme ini beserta alasannya adalah ...", options: { A: "Komensalisme, karena hanya ikan badut yang diuntungkan sementara anemon netral", B: "Mutualisme, karena ikan badut mendapat perlindungan dari predator dan anemon mendapat pasokan sisa makanan serta perlindungan dari ikan pemakan tentakel", C: "Parasitisme, karena ikan badut mengambil nutrisi jaringan tubuh anemon", D: "Amensalisme, karena racun anemon menghambat pertumbuhan ikan lain di sekitarnya" }, correctAnswer: "B", explanation: "Kedua pihak saling diuntungkan (mutualisme): ikan badut aman dari predator di antara tentakel beracun, sementara anemon mendapatkan pasokan makanan dan dibersihkan dari parasit." },
+        { questionId: "p1_q36", packageId: 1, questionNumber: 36, type: "Fisik", topic: "Hukum Gravitasi Kuadrat Jarak", questionText: "Dua buah asteroid di sabuk asteroid terpisah pada jarak R dan saling menarik dengan gaya gravitasi sebesar F. Jika jarak pemisah antara kedua asteroid tersebut dijauhkan menjadi 3R, maka besar gaya gravitasi timbal balik antara kedua asteroid tersebut menjadi ...", options: { A: "9F", B: "3F", C: "1/3 F", D: "1/9 F" }, correctAnswer: "D", explanation: "Gaya gravitasi berbanding terbalik dengan kuadrat jarak pisah (F ∝ 1/r²). Jika jarak menjadi 3 kali semula, gaya tarik menjadi 1/(3)² = 1/9 F." },
+        { questionId: "p1_q37", packageId: 1, questionNumber: 37, type: "Hayati", topic: "Auksin & Fototropisme Batang", questionText: "Sebuah pot tanaman kecambah diletakkan di dalam kotak kardus yang hanya memiliki satu lubang kecil di sisi kanannya sehingga cahaya matahari hanya masuk dari satu arah (cahaya unilateral). Setelah empat hari, batang kecambah melengkung tumbuh ke arah datangnya cahaya (fototropisme positif). Penjelasan mekanisme kerja hormon auksin yang mendasari pembengkokan batang tersebut adalah ...", options: { A: "Cahaya merangsang sintesis auksin lebih banyak pada sisi batang yang terkena cahaya", B: "Hormon auksin terdegradasi atau bermigrasi ke sisi batang yang teduh (gelap), menyebabkan sel-sel sisi teduh memanjang lebih cepat", C: "Auksin membekukan pembelahan sel pada sisi yang gelap", D: "Hormon giberelin menghancurkan dinding sel pada sisi yang terang" }, correctAnswer: "B", explanation: "Auksin bersifat peka cahaya dan bermigrasi ke sisi batang yang teduh/gelap. Konsentrasi auksin yang tinggi di sisi teduh memacu pemanjangan sel lebih cepat, mendorong batang melengkung ke arah cahaya." },
+        { questionId: "p1_q38", packageId: 1, questionNumber: 38, type: "Fisik", topic: "Efek Doppler Sirine Polisi", questionText: "Sebuah mobil polisi membunyikan sirine berfrekuensi 680 Hz melaju dengan kelajuan 20 m/s mendekati seorang pengamat yang sedang duduk diam di halte bus. Kecepatan rambat bunyi di udara saat itu adalah 340 m/s. Frekuensi bunyi sirine yang didengar oleh pengamat di halte tersebut adalah ...", options: { A: "642 Hz", B: "680 Hz", C: "722,5 Hz", D: "750 Hz" }, correctAnswer: "C", explanation: "fp = [v / (v - vs)] × fs = [340 / (340 - 20)] × 680 = (340 / 320) × 680 = 1,0625 × 680 = 722,5 Hz." },
+        { questionId: "p1_q39", packageId: 1, questionNumber: 39, type: "Hayati", topic: "Bioteknologi Fermentasi Yoghurt", questionText: "Yoghurt dibuat dari susu murni melalui fermentasi asam laktat dengan bantuan bakteri Lactobacillus bulgaricus dan Streptococcus thermophilus. Perubahan biokimia utama yang terjadi sehingga tekstur susu mencair berubah menjadi kental dan memiliki rasa asam yang khas adalah ...", options: { A: "Bakteri mengubah lemak susu menjadi gliserol dan alkohol", B: "Bakteri mengubah gula laktosa susu menjadi asam laktat, yang menyebabkan penurunan pH dan koagulasi (penggumpalan) protein kasein susu", C: "Bakteri menguapkan kandungan air susu melalui respirasi aerobik", D: "Bakteri memecah kalsium susu menjadi kristal padat anorganik" }, correctAnswer: "B", explanation: "Bakteri memfermentasi gula laktosa menjadi asam laktat. Akumulasi asam menurunkan pH hingga titik isoelektrik kasein, menyebabkan protein menggumpal (koagulasi) membentuk tekstur kental asam yoghurt." },
+        { questionId: "p1_q40", packageId: 1, questionNumber: 40, type: "Fisik", topic: "Pasang Perbani Kuadratur", questionText: "Ketika posisi Matahari, Bulan, dan Bumi membentuk sudut siku-siku (90°) pada fase Bulan kuartir pertama dan kuartir ketiga, pasang surut air laut yang terjadi di bumi berada pada rentang perbedaan pasang-surut yang paling minimum (pasang perbani / neap tide). Fenomena pasang perbani ini terjadi karena ...", options: { A: "Gravitasi Bulan dan Gravitasi Matahari saling tegak lurus sehingga efek gravitasinya saling melemahkan", B: "Gravitasi Bulan terhalang total oleh inti Bumi", C: "Jarak Bulan ke Bumi berada pada posisi apogee terjauh", D: "Sinar matahari memanaskan air laut sehingga densitas air mengecil" }, correctAnswer: "A", explanation: "Pada sudut 90° (kuadratur), tarikan gravitasi Matahari berada pada posisi tegak lurus terhadap gravitasi Bulan, sehingga gayanya saling mengurangi dan menghasilkan pasang naik terendah dan surut tertinggi (pasang perbani)." }
+      ],
+      2: [
+        { questionId: "p2_q1", packageId: 2, questionNumber: 1, type: "Hayati", topic: "Fotoperiodisme Tanaman", questionText: "Tanaman krisan (Chrysanthemum) merupakan jenis tumbuhan hari pendek (short-day plant) yang secara alami hanya akan berbunga jika periode gelap (malam) lebih panjang daripada periode kritisnya. Seorang petani bunga ingin menunda masa berbunga krisan di dalam rumah kaca agar batang tanamannya tumbuh lebih tinggi sebelum panen. Tindakan manipulasi fotoperiodisme yang paling efektif dilakukan oleh petani adalah ...", options: { A: "Menutup seluruh rumah kaca dengan paranet gelap selama 14 jam penuh setiap hari", B: "Memberikan kilatan cahaya merah (flash of red light) singkat di tengah-tengah periode gelap malam hari", C: "Menyemprotkan gas karbon dioksida dosis tinggi pada siang hari", D: "Menurunkan suhu rumah kaca hingga 10°C pada waktu siang hari" }, correctAnswer: "B", explanation: "Tumbuhan hari pendek memerlukan periode gelap malam tanpa gangguan. Memberikan kilatan cahaya merah singkat di tengah malam memecah kontinuitas periode gelap, sehingga pembungaan berhasil ditunda." },
+        { questionId: "p2_q2", packageId: 2, questionNumber: 2, type: "Fisik", topic: "Efisiensi Pompa Listrik", questionText: "Sebuah pompa air listrik berdaya masukan 400 Watt digunakan untuk menaikkan air sebanyak 1.200 liter dari sumur berkedalaman 10 meter menuju tandon air di atas rumah (g = 10 m/s², massa jenis air ρ = 1 kg/liter). Jika proses pengisian tersebut memerlukan waktu tepat 10 menit, maka efisiensi energi mekanik pompa air tersebut adalah ...", options: { A: "40%", B: "50%", C: "60%", D: "75%" }, correctAnswer: "B", explanation: "Massa air m = 1.200 kg. W_keluar = m·g·h = 1.200 × 10 × 10 = 120.000 J. Waktu t = 600 s. P_keluar = 120.000 / 600 = 200 Watt. Efisiensi = (200 / 400) × 100% = 50%." },
+        { questionId: "p2_q3", packageId: 2, questionNumber: 3, type: "Hayati", topic: "Suksesi Sekunder Sawit", questionText: "Sebuah kawasan perkebunan kelapa sawit ditinggalkan oleh pemiliknya setelah terbakar habis. Lima tahun kemudian, kawasan tersebut dipenuhi oleh alang-alang (Imperata cylindrica). Sepuluh tahun berikutnya, semak belukar dan pohon perintis mulai mendominasi menaungi tanah. Perubahan struktural pada ekosistem tersebut menunjukkan bahwa ...", options: { A: "Suksesi primer sedang berlangsung karena tanah kehilangan seluruh mikrobanya", B: "Suksesi sekunder sedang terjadi dengan peningkatan bertahap biomassa dan keanekaragaman jenis", C: "Ekosistem mengalami degradasi permanen tanpa ada peluang mencapai komunitas klimaks", D: "Alang-alang merupakan spesies klimaks yang tidak akan pernah tergantikan" }, correctAnswer: "B", explanation: "Bekas kebakaran menyisakan lapisan tanah dan materi organik utuh, sehingga suksesi yang berlangsung adalah suksesi sekunder, ditandai penambahan bertahap biomassa dan keanekaragaman komunitas." },
+        { questionId: "p2_q4", packageId: 2, questionNumber: 4, type: "Fisik", topic: "Kontinuitas Fluida Pipa", questionText: "Air mengalir secara laminer dan tunak melalui pipa mendatar yang memiliki diameter penampang berbeda. Diameter pipa pada bagian input (D₁) adalah 6 cm dengan laju aliran 2 m/s. Pipa tersebut menyempit hingga diameter bagian ujungnya (D₂) menjadi 3 cm. Laju aliran fluida pada pipa yang menyempit tersebut adalah ...", options: { A: "4 m/s", B: "6 m/s", C: "8 m/s", D: "12 m/s" }, correctAnswer: "C", explanation: "Luas penampang sebanding kuadrat diameter: D₁² · v₁ = D₂² · v₂ → (6)² × 2 = (3)² × v₂ → 36 × 2 = 9 v₂ → v₂ = 72 / 9 = 8 m/s." },
+        { questionId: "p2_q5", packageId: 2, questionNumber: 5, type: "Hayati", topic: "Transfusi Darah Rhesus", questionText: "Seseorang yang memiliki golongan darah O Rh-positif memerlukan transfusi darah darurat. Namun, stok darah di rumah sakit menipis. Berdasarkan konsep aglutinogen (antigen) pada eritrosit dan aglutinin (antibodi) di dalam plasma darah, golongan darah donor yang paling aman diberikan kepada pasien tersebut adalah ...", options: { A: "Golongan darah AB Rh-positif", B: "Golongan darah A Rh-negatif", C: "Golongan darah B Rh-positif", D: "Golongan darah O Rh-negatif" }, correctAnswer: "D", explanation: "Resipien bergolongan darah O memiliki antibodi anti-A dan anti-B di plasmanya, sehingga hanya boleh menerima eritrosit golongan O. Karena resipien Rh-positif, donor O Rh-negatif tidak mengandung antigen A, B, maupun Rh sehingga sangat aman." },
+        { questionId: "p2_q6", packageId: 2, questionNumber: 6, type: "Fisik", topic: "Waktu Paruh Radioaktif", questionText: "Sebuah sampel zat radioaktif memiliki massa awal 80 gram dengan waktu paruh (T_1/2) selama 12 hari. Berapakah sisa massa zat radioaktif tersebut yang belum meluruh setelah disimpan di laboratorium selama 36 hari?", options: { A: "5 gram", B: "10 gram", C: "20 gram", D: "40 gram" }, correctAnswer: "B", explanation: "Jumlah periode paruh n = 36 / 12 = 3. Sisa zat Nt = 80 × (1/2)³ = 80 × 1/8 = 10 gram." },
+        { questionId: "p2_q7", packageId: 2, questionNumber: 7, type: "Hayati", topic: "Reabsorpsi Glukosa TKP", questionText: "Hasil uji laboratorium terhadap sampel urine seorang pasien menunjukkan adanya endapan merah bata saat ditetesi larutan Benedict dan dipanaskan, namun tidak mengalami penggumpalan saat diuji dengan larutan Biuret. Berdasarkan data klinis tersebut, gangguan penyerapan kembali zat makanan terjadi pada bagian nefron ...", options: { A: "Glomerulus, karena membran filtrasi bocor meloloskan molekul albumin", B: "Tubulus kontortus proksimal, karena gagal mereabsorpsi glukosa secara optimal", C: "Lengkung Henle, karena gangguan osmosis ion natrium", D: "Tubulus kolektivus, karena kekurangan hormon antidiuretik" }, correctAnswer: "B", explanation: "Uji Benedict positif merah bata mengindikasikan keberadaan glukosa dalam urine (glukosuria). Reabsorpsi glukosa normalnya terjadi 100% di Tubulus Kontortus Proksimal (TKP). Uji Biuret negatif membuktikan glomerulus normal." },
+        { questionId: "p2_q8", packageId: 2, questionNumber: 8, type: "Fisik", topic: "Konsumsi Energi Listrik", questionText: "Sebuah rumah menggunakan 4 buah lampu LED masing-masing berdaya 15 Watt menyala 10 jam per hari, sebuah televisi 100 Watt menyala 8 jam per hari, dan sebuah kulkas 120 Watt menyala 24 jam sehari. Total konsumsi energi listrik rumah tersebut selama 30 hari adalah ...", options: { A: "86,4 kWh", B: "128,4 kWh", C: "146,4 kWh", D: "172,8 kWh" }, correctAnswer: "B", explanation: "Energi harian: (4×15×10) + (100×8) + (120×24) = 600 + 800 + 2.880 = 4.280 Wh = 4,28 kWh. Total 30 hari = 4,28 × 30 = 128,4 kWh." },
+        { questionId: "p2_q9", packageId: 2, questionNumber: 9, type: "Hayati", topic: "Siklus Fosfor Batuan", questionText: "Berbeda dengan siklus biogeokimia karbon, nitrogen, dan air, siklus fosfor dianggap sebagai siklus yang paling lambat perputarannya dan tidak memiliki fase gas di atmosfer. Sumber alami utama fosfor yang dapat diserap oleh produsen tumbuhan di daratan berasal dari ...", options: { A: "Kondensasi uap belerang dari kawah gunung berapi", B: "Pelapukan alami batuan mineral fosfat di kerak bumi", C: "Fiksasi senyawa aerosol laut oleh petir", D: "Penguraian langsung gas metana oleh bakteri tanah" }, correctAnswer: "B", explanation: "Fosfor tidak bersiklus di atmosfer gas. Sumber utamanya tersimpan di batuan mineral fosfat kerak bumi yang dilepaskan melalui proses pelapukan dan erosi alami ke tanah." },
+        { questionId: "p2_q10", packageId: 2, questionNumber: 10, type: "Fisik", topic: "Perbesaran Lup Akomodasi", questionText: "Seorang pengamat memiliki titik dekat mata normal (Sn = 25 cm) mengamati fosil serangga kecil menggunakan kaca pembesar (lup) yang memiliki jarak fokus 5 cm. Jika pengamatan dilakukan dengan mata berakomodasi maksimum, maka perbesaran bayangan yang dihasilkan oleh lup tersebut adalah ...", options: { A: "4 kali", B: "5 kali", C: "6 kali", D: "7 kali" }, correctAnswer: "C", explanation: "Mata berakomodasi maksimum: M = (Sn / f) + 1 = (25 / 5) + 1 = 5 + 1 = 6 kali." },
+        { questionId: "p2_q11", packageId: 2, questionNumber: 11, type: "Hayati", topic: "Reproduksi Bunga Angiospermae", questionText: "Perhatikan bagian-bagian organ reproduksi bunga: (1) Kepala putik (stigma), (2) Kepala sari (anther), (3) Bakal biji (ovulum), (4) Serbuk sari (pollen). Tempat terjadinya pembelahan meiosis yang menghasilkan mikrospora haploid serta tempat berlangsungnya pembuahan ganda pada tumbuhan berbiji tertutup (Angiospermae) berturut-turut adalah nomor ...", options: { A: "1 dan 3", B: "2 dan 3", C: "4 dan 1", D: "2 dan 4" }, correctAnswer: "B", explanation: "Kepala sari (anther, No. 2) adalah tempat meiosis mikrosporogenesis pembentuk serbuk sari. Pembuahan ganda menghasilkan zigot dan endosperma berlangsung di dalam bakal biji (ovulum, No. 3)." },
+        { questionId: "p2_q12", packageId: 2, questionNumber: 12, type: "Fisik", topic: "Hukum Melde Cepat Rambat", questionText: "Pada seutas tali elastis sepanjang 4 meter yang direntangkan mendatar terbentuk gelombang transversal stasioner. Jika massa total tali adalah 100 gram dan tali ditarik dengan gaya tegangan 160 N, maka cepat rambat gelombang transversal pada tali tersebut berdasarkan Hukum Melde adalah ...", options: { A: "40 m/s", B: "80 m/s", C: "100 m/s", D: "160 m/s" }, correctAnswer: "B", explanation: "Massa linier μ = m / L = 0,1 kg / 4 m = 0,025 kg/m. Cepat rambat v = √(F / μ) = √(160 / 0,025) = √6.400 = 80 m/s." },
+        { questionId: "p2_q13", packageId: 2, questionNumber: 13, type: "Hayati", topic: "Respirasi Sistem Trakea", questionText: "Serangga berukuran besar seperti belalang tidak memiliki pigmen hemoglobin di dalam cairan tubuhnya (hemolimfa). Meskipun demikian, belalang tetap dapat melompat aktif dan memenuhi kebutuhan oksigen jaringan ototnya secara sangat cepat. Hal ini dimungkinkan karena ...", options: { A: "Hemolimfa serangga mengikat oksigen melalui senyawa hemosianin tembaga", B: "Sistem pernapasan trakea menyalurkan gas oksigen langsung dari spirakel ke seluruh sel tubuh tanpa perantara darah", C: "Seluruh permukaan kutikula serangga mampu menyerap oksigen melalui respirasi kulit", D: "Serangga memiliki paru-paru buku ganda di bagian toraks" }, correctAnswer: "B", explanation: "Sistem trakea bercabang langsung menjangkau seluruh sel tubuh via trakeol, mendifusikan oksigen tanpa perantara darah. Hemolimfa serangga hanya mengangkut nutrisi dan sisa ekskresi." },
+        { questionId: "p2_q14", packageId: 2, questionNumber: 14, type: "Fisik", topic: "Fenomena Aurora Kutub", questionText: "Fenomena cahaya warna-warni yang menari di langit malam kawasan kutub bumi (Aurora Borealis dan Aurora Australis) merupakan bukti nyata interaksi antara bumi dengan aktivitas matahari. Fenomena optik atmosfer ini dipicu oleh ...", options: { A: "Pembiasan sinar bulan oleh kristal es di lapisan troposfer", B: "Partikel bermuatan dari angin matahari (solar wind) yang dibelokkan oleh magnetosfer bumi dan bertumbukan dengan molekul gas di termosfer/ionosfer", C: "Radiasi sinar ultraviolet yang membakar gas ozon di lapisan stratosfer", D: "Pantulan cahaya kilat petir di atas lapisan mesosfer" }, correctAnswer: "B", explanation: "Partikel bermuatan angin matahari diarahkan oleh medan magnet bumi menuju kutub dan bertumbukan mengeksitasi atom nitrogen dan oksigen di lapisan termosfer/ionosfer, memancarkan pendar aurora." },
+        { questionId: "p2_q15", packageId: 2, questionNumber: 15, type: "Hayati", topic: "Bioteknologi Enzim Tempe", questionText: "Pada proses fermentasi kedelai menjadi tempe menggunakan jamur Rhizopus oryzae, kedelai yang keras berubah teksturnya menjadi lebih lunak, kompak diselimuti hifa putih, serta proteinnya menjadi jauh lebih mudah dicerna oleh usus manusia. Perubahan tersebut disebabkan karena miselium jamur menyekresikan enzim ...", options: { A: "Lipase yang mengubah minyak kedelai menjadi asam sitrat pekat", B: "Protease yang memecah protein kompleks kedelai menjadi peptida dan asam amino sederhana", C: "Amilase yang mengubah serat selulosa menjadi kristal sukrosa", D: "Selulase yang mengeraskan dinding sel kedelai" }, correctAnswer: "B", explanation: "Jamur Rhizopus oryzae memproduksi enzim protease ekstraseluler yang menghidrolisis protein kedelai berantai panjang menjadi peptida dan asam amino sederhana yang mudah dicerna." },
+        { questionId: "p2_q16", packageId: 2, questionNumber: 16, type: "Fisik", topic: "Transformator Step-Down", questionText: "Sebuah transformator step-down ideal dihubungkan ke sumber tegangan bolak-balik 220 Volt untuk menyalakan perangkat elektronik bertegangan kerja 11 Volt. Jika kumparan primer transformator memiliki 1.000 lilitan dan arus pada kumparan sekunder adalah 2 Ampere, maka jumlah lilitan sekunder dan kuat arus pada kumparan primernya berturut-turut adalah ...", options: { A: "50 lilitan dan 0,1 Ampere", B: "50 lilitan dan 40 Ampere", C: "200 lilitan dan 0,2 Ampere", D: "200 lilitan dan 10 Ampere" }, correctAnswer: "A", explanation: "Ns = Np × (Vs / Vp) = 1.000 × (11 / 220) = 50 lilitan. Transformator ideal: Vp·Ip = Vs·Is → 220 × Ip = 11 × 2 → Ip = 22 / 220 = 0,1 Ampere." },
+        { questionId: "p2_q17", packageId: 2, questionNumber: 17, type: "Hayati", topic: "Mitosis vs Meiosis Sel", questionText: "Penyataan berikut yang membedakan pembelahan sel secara mitosis dengan meiosis yang tepat adalah ...", options: { A: "Mitosis menghasilkan 4 sel anak identik, sedangkan meiosis menghasilkan 2 sel anak", B: "Mitosis terjadi pada pembentukan sel gamet sperma/ovum, sedangkan meiosis terjadi pada sel tubuh (somatik)", C: "Mitosis mempertahankan jumlah kromosom diploid (2n) untuk pertumbuhan, sedangkan meiosis mereduksi kromosom menjadi haploid (n) untuk reproduksi", D: "Pada mitosis terjadi peristiwa pindah silang (crossing over), sedangkan pada meiosis tidak terjadi" }, correctAnswer: "C", explanation: "Mitosis menghasilkan 2 sel anak diploid (2n) identik untuk regenerasi jaringan tubuh. Meiosis mereduksi kromosom menjadi haploid (n) menghasilkan 4 sel gamet untuk reproduksi seksual." },
+        { questionId: "p2_q18", packageId: 2, questionNumber: 18, type: "Fisik", topic: "Tumbukan Tak Lenting Kereta", questionText: "Sebuah gerbong kereta api A bermassa 10.000 kg melaju dengan kelajuan 4 m/s di atas rel lurus tanpa gesekan menabrak gerbong kereta api B bermassa 10.000 kg yang sedang diam. Setelah bertabrakan, kedua gerbong saling mengunci dan bergerak bersama-sama. Kelajuan kedua gerbong setelah tumbukan adalah ...", options: { A: "1 m/s", B: "2 m/s", C: "4 m/s", D: "8 m/s" }, correctAnswer: "B", explanation: "mA·vA + mB·vB = (mA + mB)·v' → (10.000 × 4) + 0 = 20.000 × v' → 40.000 = 20.000 v' → v' = 2 m/s." },
+        { questionId: "p2_q19", packageId: 2, questionNumber: 19, type: "Hayati", topic: "Dampak Eutrofikasi Danau", questionText: "Limpasan pupuk fosfat dan nitrat buatan dari lahan pertanian yang masuk ke perairan danau memicu terjadinya peristiwa eutrofikasi (algal bloom). Dampak lanjutan yang menyebabkan kematian massal ikan di danau tersebut adalah ...", options: { A: "Alga beracun memakan seluruh anak ikan kecil", B: "Ledakan alga menghalangi sinar matahari dan ketika alga mati massal, dekomposisi oleh bakteri menguras habis persediaan oksigen terlarut (dissolved oxygen)", C: "Air danau menguap seluruhnya akibat panas metabolik fitoplankton", D: "Kadar garam air danau meningkat drastis menyerupai air laut" }, correctAnswer: "B", explanation: "Ledakan alga mati didekomposisi oleh bakteri pengurai secara masif, menguras habis oksigen terlarut (kondisi anoksik) sehingga ikan mati lemas." },
+        { questionId: "p2_q20", packageId: 2, questionNumber: 20, type: "Fisik", topic: "Hukum Boyle Gelembung", questionText: "Sebuah gelembung udara dilepaskan oleh penyelam dari dasar danau air tawar pada kedalaman 20 meter. Jika tekanan di permukaan danau adalah 1 atm (setara 10 meter kolom air) dan suhu air danau dianggap seragam dari dasar hingga permukaan, maka volume gelembung udara tersebut saat tepat mencapai permukaan danau akan menjadi ...", options: { A: "1,5 kali volume awal", B: "2 kali volume awal", C: "3 kali volume awal", D: "4 kali volume awal" }, correctAnswer: "C", explanation: "Tekanan dasar P₁ = 1 atm + (20/10 atm) = 3 atm. Tekanan permukaan P₂ = 1 atm. Hukum Boyle: P₁·V₁ = P₂·V₂ → 3 V₁ = 1 V₂ → V₂ = 3 kali volume awal." },
+        { questionId: "p2_q21", packageId: 2, questionNumber: 21, type: "Hayati", topic: "Tahapan Uji Sachs", questionText: "Pada uji Sachs untuk membuktikan adanya amilum hasil fotosintesis, urutan perlakuan daun yang benar setelah dipetik dari pohon adalah ...", options: { A: "Ditetesi Lugol → direbus dalam air → dimasukkan ke dalam alkohol panas", B: "Direbus dalam alkohol panas → ditetesi Lugol → direbus dalam air dingin", C: "Direbus dalam air mendidih → direbus dalam alkohol panas → dibilas dan ditetesi larutan iodin/Lugol", D: "Direndam larutan cuka → dijemur di terik matahari → ditetesi iodin" }, correctAnswer: "C", explanation: "Urutan baku: 1) Rebus air mendidih (matikan sel), 2) Rebus alkohol panas (larutkan klorofil), 3) Bilas dan tetesi larutan iodin/Lugol (uji keberadaan amilum)." },
+        { questionId: "p2_q22", packageId: 2, questionNumber: 22, type: "Fisik", topic: "Momen Gaya Kunci Inggris", questionText: "Sebuah kunci inggris sepanjang 30 cm digunakan montir untuk mengencangkan sebuah baut mesin. Jika montir mengerahkan gaya dorong sebesar 80 N tegak lurus pada ujung gagang kunci inggris, besar momen gaya (torsi) yang bekerja memutar baut tersebut adalah ...", options: { A: "2,4 N·m", B: "24 N·m", C: "240 N·m", D: "2.400 N·m" }, correctAnswer: "B", explanation: "Lengan r = 0,3 meter. Gaya F = 80 N. Torsi τ = F · r · sin 90° = 80 × 0,3 = 24 N·m." },
+        { questionId: "p2_q23", packageId: 2, questionNumber: 23, type: "Hayati", topic: "Transmisi Sinapsis Saraf", questionText: "Transmisi impuls antarsel saraf pada celah sinapsis berlangsung secara kimiawi melalui pelepasan senyawa pembawa pesan khusus. Senyawa kimia yang disekresikan oleh vesikula akson prasinapsis untuk merangsang reseptor membran pascasinapsis disebut ...", options: { A: "Hormon tiroksin", B: "Enzim ptialin", C: "Neurotransmiter (seperti asetilkolin)", D: "Hemoglobin" }, correctAnswer: "C", explanation: "Penghantaran impuls di celah sinapsis diperantarai oleh molekul neurotransmiter (misalnya asetilkolin) yang dilepaskan vesikula prasinapsis menuju reseptor pascasinapsis." },
+        { questionId: "p2_q24", packageId: 2, questionNumber: 24, type: "Fisik", topic: "Kalor Lebur Es", questionText: "Sebanyak 500 gram es bersuhu 0°C hendak diubah seluruhnya menjadi air bersuhu 0°C. Jika kalor lebur es adalah 80 kal/g, maka jumlah energi kalor yang dibutuhkan untuk proses peleburan tersebut adalah ...", options: { A: "4.000 kal", B: "8.000 kal", C: "40.000 kal", D: "80.000 kal" }, correctAnswer: "C", explanation: "Q = m · L = 500 gram × 80 kal/g = 40.000 kalori." },
+        { questionId: "p2_q25", packageId: 2, questionNumber: 25, type: "Hayati", topic: "Peran Dekomposer Hutan", questionText: "Jamur kayu (Polyporales) dan bakteri saprofit menempati peran fungsional yang sangat penting di ekosistem lantai hutan hujan tropis. Peran ekologis kedua organisme tersebut sebagai dekomposer adalah ...", options: { A: "Memangsa serangga karnivora untuk mengontrol populasi hama", B: "Mengubah materi anorganik bebas menjadi glukosa melalui kemosintesis", C: "Menguraikan senyawa organik kompleks dari bangkai dan sisa tumbuhan mati menjadi unsur hara anorganik yang dapat diserap kembali oleh tanaman", D: "Menyaring polutan air tanah menjadi air murni" }, correctAnswer: "C", explanation: "Dekomposer merombak sisa organik kompleks dari organisme mati menjadi molekul anorganik sederhana (nitrat, fosfat) untuk diserap kembali oleh akar produsen." },
+        { questionId: "p2_q26", packageId: 2, questionNumber: 26, type: "Fisik", topic: "Inti Luar Bumi Cair", questionText: "Gelombang gempa bumi sekunder (gelombang S) memiliki sifat fisis hanya mampu merambat melalui medium padat dan langsung lenyap saat membentur medium cair. Fakta seismik yang menunjukkan hilangnya gelombang S pada kedalaman sekitar 2.900 km di bawah permukaan bumi membuktikan bahwa lapisan ...", options: { A: "Kerak bumi bagian atas berupa lapisan granit padat", B: "Mantel bumi bagian atas berupa batuan plastis kental", C: "Inti bumi bagian luar (outer core) berwujud cair", D: "Inti bumi bagian dalam (inner core) berwujud gas mampat" }, correctAnswer: "C", explanation: "Zona bayangan gelombang S membuktikan bahwa lapisan inti luar bumi (outer core) berwujud lelehan besi-nikel cair karena gelombang transversal S tidak dapat merambat pada zat cair." },
+        { questionId: "p2_q27", packageId: 2, questionNumber: 27, type: "Hayati", topic: "Asam Lambung Pepsin", questionText: "Enzim pepsin di dalam lambung manusia berfungsi memecah ikatan peptida protein menjadi pepton. Namun, pepsinogen (bentuk inaktifnya) hanya dapat diaktifkan menjadi pepsin jika lambung berada dalam kondisi asam kuat (pH ≈ 1,5 - 2). Senyawa kimia yang disekresikan oleh sel parietal dinding lambung untuk memicu suasana asam tersebut adalah ...", options: { A: "Natrium bikarbonat (NaHCO₃)", B: "Asam klorida (HCl)", C: "Cairan empedu", D: "Asam asetat pekat" }, correctAnswer: "B", explanation: "Sel parietal lambung memproduksi asam klorida (HCl) yang menurunkan pH lambung untuk mengaktifkan proenzim pepsinogen menjadi enzim pepsin aktif." },
+        { questionId: "p2_q28", packageId: 2, questionNumber: 28, type: "Fisik", topic: "Hukum Snellius Kaca", questionText: "Seberkas sinar laser merambat dari udara (n₁ = 1) menuju sebuah balok kaca plan paralel dengan sudut datang i = 30°. Jika cepat rambat cahaya di udara adalah 3 × 10⁸ m/s dan cepat rambat cahaya di dalam balok kaca tersebut turun menjadi 2 × 10⁸ m/s, maka indeks bias mutlak kaca tersebut adalah ...", options: { A: "0,67", B: "1,33", C: "1,50", D: "1,75" }, correctAnswer: "C", explanation: "Indeks bias n = c / v = (3 × 10⁸) / (2 × 10⁸) = 1,50." },
+        { questionId: "p2_q29", packageId: 2, questionNumber: 29, type: "Hayati", topic: "Pewarisan Golongan Darah", questionText: "Sepasang suami istri memiliki golongan darah yang berbeda: sang suami bergolongan darah A heterozigot (IᴬIᴼ) dan sang istri bergolongan darah B heterozigot (IᴮIᴼ). Peluang pasangan tersebut untuk memiliki anak kandung yang memiliki golongan darah O adalah ...", options: { A: "0%", B: "25%", C: "50%", D: "75%" }, correctAnswer: "B", explanation: "Persilangan IᴬIᴼ × IᴮIᴼ menghasilkan 25% IᴬIᴮ (AB), 25% IᴬIᴼ (A), 25% IᴮIᴼ (B), dan 25% IᴼIᴼ (Golongan O)." },
+        { questionId: "p2_q30", packageId: 2, questionNumber: 30, type: "Fisik", topic: "Pasang Perbani Kuartir", questionText: "Pada fase bulan separuh (kuartir pertama dan kuartir ketiga), posisi garis hubung Bumi-Bulan tegak lurus (90°) terhadap garis hubung Bumi-Matahari. Dampak yang terjadi pada permukaan laut di bumi adalah ...", options: { A: "Terjadi pasang surut maksimum (pasang purnama) karena gravitasi Bulan dan Matahari bersatu", B: "Terjadi pasang surut minimum (pasang perbani) karena tarikan gravitasi Bulan dan Matahari saling mengurangi", C: "Air laut tidak mengalami pasang surut sama sekali", D: "Terjadi badai tsunami di seluruh samudera" }, correctAnswer: "B", explanation: "Posisi saling tegak lurus 90° melemahkan pasang surut gravitasi Bulan oleh tarikan Matahari, menghasilkan pasang naik terendah dan surut tertinggi (pasang perbani)." },
+        { questionId: "p2_q31", packageId: 2, questionNumber: 31, type: "Hayati", topic: "Kurva Aktivitas Enzim Suhu", questionText: "Grafik aktivitas enzim amilase terhadap perubahan suhu menunjukkan kenaikan aktivitas dari 10°C hingga mencapai titik puncak pada suhu 37°C. Namun, ketika suhu dinaikkan melampaui 60°C, aktivitas enzim langsung anjlok mendekati angka nol. Penjelasan ilmiah yang tepat untuk penurunan drastis tersebut adalah ...", options: { A: "Molekul substrat pati habis bereaksi seluruhnya", B: "Enzim membeku dan tidak mampu bergerak di atas 60°C", C: "Suhu tinggi merusak ikatan hidrogen struktur spasial protein enzim sehingga sisi aktifnya berubah bentuk (denaturasi termal)", D: "Enzim berubah menjadi inhibitor kompetitif" }, correctAnswer: "C", explanation: "Di atas temperatur optimum 37°C, energi termal tinggi merusak ikatan hidrogen konformasi spasial protein (denaturasi termal), sehingga sisi aktif enzim rusak permanen." },
+        { questionId: "p2_q32", packageId: 2, questionNumber: 32, type: "Fisik", topic: "Tuas Jenis III Lengan", questionText: "Saat seseorang menekuk lengannya mengangkat beban dengan posisi siku sebagai tumpuan, otot bisep yang menempel di dekat siku mengerahkan gaya tarik ke atas. Sistem gerak lengan ini bekerja menyerupai prinsip pesawat sederhana tuas jenis ketiga, karena ...", options: { A: "Titik tumpu berada tepat di antara beban dan kuasa", B: "Gaya beban berada di antara titik tumpu dan titik kuasa", C: "Titik kuasa (otot bisep) berada di antara titik tumpu (sendi siku) dan beban di telapak tangan", D: "Keuntungan mekanisnya selalu lebih besar dari 10" }, correctAnswer: "C", explanation: "Tuas jenis ketiga: posisi kuasa (insersi otot bisep) berada di antara titik tumpu (sendi siku) dan titik beban (telapak tangan)." },
+        { questionId: "p2_q33", packageId: 2, questionNumber: 33, type: "Hayati", topic: "Termoregulasi Kadal Ektoterm", questionText: "Kadal gurun (Sauromalus) sering terlihat berjemur di atas batu terbuka pada pagi hari, namun berpindah masuk ke liang tanah yang teduh pada tengah hari yang terik. Perilaku ini dilakukan oleh kadal tersebut karena ...", options: { A: "Kadal merupakan hewan endoterm yang memproduksi panas internal tubuh sangat tinggi", B: "Kadal merupakan hewan poikiloterm (ektoterm) yang suhu tubuhnya bergantung pada penyerapan panas lingkungan luar", C: "Kadal bernapas menggunakan kulit sehingga membutuhkan kelembapan mutlak", D: "Kulit bersisik kadal tidak mengandung pigmen melanosit" }, correctAnswer: "B", explanation: "Kadal adalah hewan ektoterm (poikiloterm) yang tidak menghasilkan panas metabolik konstan, sehingga mengatur suhu tubuhnya melalui adaptasi perilaku (berjemur pagi hari dan berteduh saat terik)." },
+        { questionId: "p2_q34", packageId: 2, questionNumber: 34, type: "Fisik", topic: "Massa Jenis Campuran Fluida", questionText: "Sebanyak 200 mL cairan A bermassa jenis 0,8 g/cm³ dicampurkan secara homogen dengan 300 mL cairan B bermassa jenis 1,2 g/cm³. Jika tidak terjadi penyusutan volume setelah kedua cairan bercampur, massa jenis campuran cairan tersebut adalah ...", options: { A: "0,96 g/cm³", B: "1,00 g/cm³", C: "1,04 g/cm³", D: "1,12 g/cm³" }, correctAnswer: "C", explanation: "Massa A = 0,8 × 200 = 160 g. Massa B = 1,2 × 300 = 360 g. Massa total = 520 g. Volume total = 500 mL. Massa jenis campuran = 520 / 500 = 1,04 g/cm³." },
+        { questionId: "p2_q35", packageId: 2, questionNumber: 35, type: "Hayati", topic: "Piramida Biomassa Laut", questionText: "Di ekosistem perairan laut lepas (pelagik), bentuk piramida biomassa sering kali ditemukan dalam kondisi terbalik, yaitu biomassa total fitoplankton produsen lebih kecil daripada biomassa total zooplankton konsumen primer di atasnya. Piramida biomassa terbalik ini tetap dapat menopang kehidupan laut karena ...", options: { A: "Fitoplankton memiliki siklus hidup sangat pendek dan laju reproduksi/turnover yang luar biasa cepat", B: "Zooplankton mampu melakukan fotosintesis sendiri", C: "Ikan laut tidak memerlukan energi makanan", D: "Biomassa fitoplankton menguap ke udara" }, correctAnswer: "A", explanation: "Meskipun biomassa seketika (standing crop) fitoplankton kecil, turnover rate pembelahan selnya sangat tinggi, menghasilkan produktivitas energi yang mencukupi seluruh biomassa zooplankton." },
+        { questionId: "p2_q36", packageId: 2, questionNumber: 36, type: "Fisik", topic: "Gaya Coulomb Sentuhan", questionText: "Dua buah muatan listrik titik masing-masing bermuatan +2 μC dan +8 μC terpisah pada jarak r dan mengalami gaya tolak-menolak sebesar F. Jika kedua muatan tersebut dihubungkan sejenak dengan kawat penghantar halus hingga terjadi kesetimbangan muatan lalu dipisahkan kembali pada jarak r yang sama, besar gaya tolak-menolak yang baru antar-kedua muatan tersebut adalah ...", options: { A: "9/16 F", B: "25/16 F", C: "2F", D: "5/2 F" }, correctAnswer: "B", explanation: "F₁ ∝ 2 × 8 = 16. Setelah disentuhkan, muatan terbagi rata q' = (2 + 8)/2 = +5 μC. F₂ ∝ 5 × 5 = 25. Maka gaya baru F₂ = 25/16 F₁." },
+        { questionId: "p2_q37", packageId: 2, questionNumber: 37, type: "Hayati", topic: "Mekanisme Membuka Stomata", questionText: "Mekanisme membukanya celah stomata pada daun tumbuhan di pagi hari dipicu oleh peristiwa penumpukan ion kalium (K⁺) secara aktif ke dalam sel penjaga (guard cells). Akumulasi ion tersebut menyebabkan membukanya stomata karena ...", options: { A: "Konsentrasi cairan sel penjaga menjadi hipertonik sehingga air berosmosis masuk, membuat sel turgid dan melengkung membuka", B: "Dinding sel penjaga hancur terkena ion kalium", C: "Sel penjaga kehilangan air dan mengalami plasmolisis mengkerut", D: "Kalium bereaksi dengan udara membentuk lapisan lilin" }, correctAnswer: "A", explanation: "Akumulasi ion K⁺ menurunkan potensial air vakuola sel penjaga (hipertonik). Air masuk secara osmosis memicu turgor tinggi, mendesak dinding sel melengkung dan membuka pori stomata." },
+        { questionId: "p2_q38", packageId: 2, questionNumber: 38, type: "Fisik", topic: "Hukum III Kepler Periode", questionText: "Berdasarkan Hukum III Kepler, kuadrat periode revolusi planet mengelilingi matahari berbanding lurus dengan pangkat tiga jarak rata-rata planet tersebut ke matahari (T² ∝ R³). Jika jarak rata-rata sebuah planet X ke matahari adalah 4 kali jarak rata-rata Bumi ke matahari (Rx = 4 SA), maka waktu yang dibutuhkan planet X untuk sekali berevolusi mengitari matahari adalah ...", options: { A: "2 tahun", B: "4 tahun", C: "8 tahun", D: "16 tahun" }, correctAnswer: "C", explanation: "(Tx / 1)² = (4 / 1)³ = 64 → Tx = √64 = 8 tahun." },
+        { questionId: "p2_q39", packageId: 2, questionNumber: 39, type: "Hayati", topic: "Bioremediasi Bakteri Minyak", questionText: "Ketika kapal tanker mengalami kebocoran minyak mentah di laut lepas, tim penanggulangan lingkungan sering menyemprotkan biakan bakteri Pseudomonas putida ke permukaan air yang tercemar. Peran bioteknologi yang dijalankan oleh bakteri ini adalah ...", options: { A: "Menghasilkan zat penggumpal untuk menenggelamkan minyak ke dasar laut", B: "Memecah rantai senyawa hidrokarbon minyak bumi menjadi senyawa karbon dioksida dan air yang tidak beracun (bioremediasi)", C: "Menghasilkan antibiotik untuk mematikan alga liar", D: "Mengubah minyak bumi menjadi bahan plastik biodegradable" }, correctAnswer: "B", explanation: "Bakteri Pseudomonas putida adalah mikroba pendegradasi hidrokarbon yang mengoksidasi senyawa minyak bumi mentah menjadi CO₂ dan H₂O yang aman bagi ekosistem (bioremediasi)." },
+        { questionId: "p2_q40", packageId: 2, questionNumber: 40, type: "Fisik", topic: "Spion Cermin Cembung", questionText: "Kaca spion samping mobil dan motor selalu menggunakan cermin cembung, bukan cermin datar maupun cermin cekung. Keunggulan optis utama pemanfaatan cermin cembung sebagai kaca spion tersebut adalah ...", options: { A: "Menghasilkan bayangan yang selalu bersifat nyata, tegak, dan berukuran sama besar", B: "Menghasilkan bayangan maya, terbalik, dan sangat tajam pada jarak dekat", C: "Selalu menghasilkan bayangan maya, tegak, diperkecil, serta memberikan bidang pandang (field of view) yang jauh lebih luas bagi pengemudi", D: "Mampu memfokuskan berkas sinar lampu kendaraan di belakang pada satu titik terang" }, correctAnswer: "C", explanation: "Cermin cembung selalu membentuk bayangan maya, tegak, dan diperkecil pada rentang jarak berapapun, memberikan jangkauan sudut pandang (field of view) yang jauh lebih luas bagi keselamatan berkendara." }
+      ]
+    };
+  </script>
+
+  <!-- ============================================================== -->
+  <!-- 3. INDEXEDDB DATABASE MODULE                                   -->
+  <!-- ============================================================== -->
+  <script>
+    const DB_NAME = 'YUK_BELAJAR_PREDIKSI_SEMI_DB';
+    const DB_VERSION = 1;
+
+    const LocalDB = {
+      db: null,
+      broadcast: null,
+
+      async init() {
+        if (typeof BroadcastChannel !== 'undefined') {
+          try {
+            this.broadcast = new BroadcastChannel('yb_semi_2pkg_sync');
+            this.broadcast.onmessage = (e) => {
+              if (e.data && e.data.type === 'SESSION_UPDATED') {
+                if (App.activeSession && App.activeSession.packageId === e.data.packageId) {
+                  App.showToast("Sesi disinkronkan dari tab lain", "info");
+                }
+              }
+            };
+          } catch(err) {}
+        }
+
+        if (navigator.storage && navigator.storage.persist) {
+          try { await navigator.storage.persist(); } catch(err) {}
+        }
+
+        return new Promise((resolve) => {
+          if (!window.indexedDB) {
+            resolve(false);
+            return;
+          }
+
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('questionBank')) {
+              const qStore = db.createObjectStore('questionBank', { keyPath: 'questionId' });
+              qStore.createIndex('packageId', 'packageId', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('sessions')) {
+              db.createObjectStore('sessions', { keyPath: 'packageId' });
+            }
+            if (!db.objectStoreNames.contains('results')) {
+              const rStore = db.createObjectStore('results', { keyPath: 'resultId' });
+              rStore.createIndex('packageId', 'packageId', { unique: false });
+              rStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('scoreboard')) {
+              const sStore = db.createObjectStore('scoreboard', { keyPath: 'scoreboardId' });
+              sStore.createIndex('packageId', 'packageId', { unique: false });
+              sStore.createIndex('finalScore', 'finalScore', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('metadata')) {
+              db.createObjectStore('metadata', { keyPath: 'key' });
+            }
+          };
+
+          request.onsuccess = async (e) => {
+            this.db = e.target.result;
+            await this.seedQuestionsIfEmpty();
+            resolve(true);
+          };
+
+          request.onerror = () => resolve(false);
+        });
+      },
+
+      async seedQuestionsIfEmpty() {
+        if (!this.db) return;
+        return new Promise((resolve) => {
+          const tx = this.db.transaction(['metadata', 'questionBank'], 'readwrite');
+          const metaStore = tx.objectStore('metadata');
+          const qStore = tx.objectStore('questionBank');
+
+          const req = metaStore.get('installationStatus');
+          req.onsuccess = () => {
+            if (req.result && req.result.installed) {
+              resolve();
+              return;
+            }
+
+            for (let p = 1; p <= 2; p++) {
+              const list = window.RAW_BANK_PREDIKSI_SEMI[p] || [];
+              list.forEach(q => qStore.put({ ...q, contentVersion: '1.0.0' }));
+            }
+
+            metaStore.put({
+              key: 'installationStatus',
+              installed: true,
+              totalPackages: 2,
+              totalQuestions: 80,
+              installedAt: new Date().toISOString()
+            });
+
+            resolve();
+          };
+          req.onerror = () => resolve();
+        });
+      },
+
+      async getQuestions(packageId) {
+        if (this.db) {
+          try {
+            return await new Promise((resolve) => {
+              const tx = this.db.transaction('questionBank', 'readonly');
+              const store = tx.objectStore('questionBank');
+              const index = store.index('packageId');
+              const req = index.getAll(packageId);
+              req.onsuccess = () => {
+                if (req.result && req.result.length === 40) {
+                  req.result.sort((a, b) => a.questionNumber - b.questionNumber);
+                  resolve(req.result);
+                } else {
+                  resolve(window.RAW_BANK_PREDIKSI_SEMI[packageId] || []);
+                }
+              };
+              req.onerror = () => resolve(window.RAW_BANK_PREDIKSI_SEMI[packageId] || []);
+            });
+          } catch(e) {}
+        }
+        return window.RAW_BANK_PREDIKSI_SEMI[packageId] || [];
+      },
+
+      async getSession(packageId) {
+        if (this.db) {
+          try {
+            return await new Promise((resolve) => {
+              const tx = this.db.transaction('sessions', 'readonly');
+              const store = tx.objectStore('sessions');
+              const req = store.get(packageId);
+              req.onsuccess = () => resolve(req.result || null);
+              req.onerror = () => resolve(null);
+            });
+          } catch(e) {}
+        }
+        try {
+          const all = JSON.parse(localStorage.getItem('YB_SEMI2_SESSIONS') || '{}');
+          return all[packageId] || null;
+        } catch(e) { return null; }
+      },
+
+      async getAnyActiveSession() {
+        if (this.db) {
+          try {
+            return await new Promise((resolve) => {
+              const tx = this.db.transaction('sessions', 'readonly');
+              const store = tx.objectStore('sessions');
+              const req = store.getAll();
+              req.onsuccess = () => {
+                const list = req.result || [];
+                const active = list.filter(s => s && !s.isCompleted && (s.status === 'in_progress' || s.status === 'paused'));
+                if (active.length > 0) {
+                  active.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+                  resolve(active[0]);
+                } else {
+                  resolve(null);
+                }
+              };
+              req.onerror = () => resolve(null);
+            });
+          } catch(e) {}
+        }
+        try {
+          const all = JSON.parse(localStorage.getItem('YB_SEMI2_SESSIONS') || '{}');
+          const active = Object.values(all).filter(s => s && !s.isCompleted);
+          return active.length > 0 ? active[0] : null;
+        } catch(e) { return null; }
+      },
+
+      async saveSession(sessionData) {
+        sessionData.updatedAt = new Date().toISOString();
+        if (this.db) {
+          try {
+            await new Promise((resolve, reject) => {
+              const tx = this.db.transaction('sessions', 'readwrite');
+              const store = tx.objectStore('sessions');
+              const req = store.put(sessionData);
+              req.onsuccess = () => resolve(true);
+              req.onerror = () => reject(req.error);
+            });
+          } catch(e) {}
+        }
+        try {
+          const all = JSON.parse(localStorage.getItem('YB_SEMI2_SESSIONS') || '{}');
+          all[sessionData.packageId] = sessionData;
+          localStorage.setItem('YB_SEMI2_SESSIONS', JSON.stringify(all));
+        } catch(e) {}
+
+        if (this.broadcast) {
+          try { this.broadcast.postMessage({ type: 'SESSION_UPDATED', packageId: sessionData.packageId }); } catch(err) {}
+        }
+      },
+
+      async deleteSession(packageId) {
+        if (this.db) {
+          try {
+            const tx = this.db.transaction('sessions', 'readwrite');
+            tx.objectStore('sessions').delete(packageId);
+          } catch(e) {}
+        }
+        try {
+          const all = JSON.parse(localStorage.getItem('YB_SEMI2_SESSIONS') || '{}');
+          delete all[packageId];
+          localStorage.setItem('YB_SEMI2_SESSIONS', JSON.stringify(all));
+        } catch(e) {}
+      },
+
+      async saveFinalResult(resultData) {
+        if (this.db) {
+          try {
+            await new Promise((resolve, reject) => {
+              const tx = this.db.transaction(['results', 'scoreboard'], 'readwrite');
+              tx.objectStore('results').put(resultData);
+              tx.objectStore('scoreboard').put({
+                scoreboardId: 'SB_' + resultData.resultId,
+                resultId: resultData.resultId,
+                packageId: resultData.packageId,
+                packageName: resultData.packageName,
+                finalScore: resultData.finalScore,
+                correct: resultData.correct,
+                wrong: resultData.wrong,
+                blank: resultData.blank,
+                durationSeconds: resultData.durationSeconds,
+                durationFormatted: resultData.durationFormatted,
+                completedAt: resultData.completedAt,
+                timestamp: resultData.timestamp
+              });
+              tx.oncomplete = () => resolve(true);
+              tx.onerror = () => reject(tx.error);
+            });
+          } catch(e) {}
+        }
+        try {
+          const list = JSON.parse(localStorage.getItem('YB_SEMI2_HISTORY') || '[]');
+          list.unshift(resultData);
+          localStorage.setItem('YB_SEMI2_HISTORY', JSON.stringify(list));
+        } catch(e) {}
+      },
+
+      async getScoreboard() {
+        if (this.db) {
+          try {
+            return await new Promise((resolve) => {
+              const tx = this.db.transaction('scoreboard', 'readonly');
+              const store = tx.objectStore('scoreboard');
+              const req = store.getAll();
+              req.onsuccess = () => resolve(req.result || []);
+              req.onerror = () => resolve([]);
+            });
+          } catch(e) {}
+        }
+        try {
+          return JSON.parse(localStorage.getItem('YB_SEMI2_HISTORY') || '[]');
+        } catch(e) { return []; }
+      },
+
+      async getResultById(resultId) {
+        if (this.db) {
+          try {
+            return await new Promise((resolve) => {
+              const tx = this.db.transaction('results', 'readonly');
+              const store = tx.objectStore('results');
+              const req = store.get(resultId);
+              req.onsuccess = () => resolve(req.result || null);
+              req.onerror = () => resolve(null);
+            });
+          } catch(e) {}
+        }
+        try {
+          const list = JSON.parse(localStorage.getItem('YB_SEMI2_HISTORY') || '[]');
+          return list.find(r => r.resultId === resultId) || null;
+        } catch(e) { return null; }
+      },
+
+      async exportBackup() {
+        let sessions = [], results = [], scoreboard = [];
+        if (this.db) {
+          sessions = await new Promise(r => this.db.transaction('sessions').objectStore('sessions').getAll().onsuccess = e => r(e.target.result));
+          results = await new Promise(r => this.db.transaction('results').objectStore('results').getAll().onsuccess = e => r(e.target.result));
+          scoreboard = await new Promise(r => this.db.transaction('scoreboard').objectStore('scoreboard').getAll().onsuccess = e => r(e.target.result));
+        } else {
+          results = JSON.parse(localStorage.getItem('YB_SEMI2_HISTORY') || '[]');
+          scoreboard = results;
+        }
+
+        const backup = {
+          application: "YUK-BELAJAR-PREDIKSI-SEMI-2PKG",
+          version: "1.0.0",
+          databaseName: DB_NAME,
+          exportedAt: new Date().toISOString(),
+          sessions,
+          results,
+          scoreboard
+        };
+
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const nowStr = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `YUK-BELAJAR-PREDIKSI-2PKG-${nowStr}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+
+      async importBackup(jsonString) {
+        let data;
+        try { data = JSON.parse(jsonString); } catch(e) { throw new Error("Format file JSON tidak valid."); }
+        if (!data.application || !data.application.includes("YUK-BELAJAR")) {
+          throw new Error("File backup tidak sesuai untuk aplikasi YUK-BELAJAR.");
+        }
+
+        if (!this.db) throw new Error("Database IndexedDB belum siap.");
+
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction(['sessions', 'results', 'scoreboard'], 'readwrite');
+          const sessStore = tx.objectStore('sessions');
+          const resStore = tx.objectStore('results');
+          const sbStore = tx.objectStore('scoreboard');
+
+          if (Array.isArray(data.sessions)) data.sessions.forEach(s => sessStore.put(s));
+          if (Array.isArray(data.results)) data.results.forEach(r => resStore.put(r));
+          if (Array.isArray(data.scoreboard)) data.scoreboard.forEach(sb => sbStore.put(sb));
+
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+    };
+  </script>
+
+  <!-- ============================================================== -->
+  <!-- 4. APPLICATION CORE CONTROLLER                                 -->
+  <!-- ============================================================== -->
+  <div id="app" class="flex-1 flex flex-col w-full relative overflow-x-hidden"></div>
+
+  <!-- Recovery Dialog Modal -->
+  <div id="recovery-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-labdark-900 rounded-3xl max-w-md w-full p-6 text-center border-2 border-scicyan-500/50 shadow-2xl">
+      <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 bg-scicyan-500/20 text-scicyan-300 border border-scicyan-400/40 cyan-glow">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </div>
+      <h3 class="text-xl font-bold font-game text-white mb-2">SELAMAT DATANG KEMBALI!</h3>
+      <p class="text-slate-300 text-xs mb-5">Kami mendeteksi sesi simulasi semifinal yang belum selesai di browser ini.</p>
+      
+      <div id="recovery-info" class="bg-labdark-950 rounded-2xl p-4 border border-slate-800 text-left text-xs space-y-2 mb-6"></div>
+
+      <div class="flex gap-3 justify-center">
+        <button id="recovery-btn-discard" class="px-5 py-2.5 rounded-xl border border-slate-700 font-bold text-xs text-slate-400 hover:bg-slate-800 transition">Hapus Sesi</button>
+        <button id="recovery-btn-resume" class="px-5 py-2.5 rounded-xl bg-accentgold hover:bg-amber-400 text-labdark-950 font-bold text-xs shadow-lg transition">LANJUTKAN UJIAN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="custom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel bg-labdark-900 rounded-3xl max-w-md w-full p-6 text-center border-2 border-scicyan-500/40 shadow-2xl">
+      <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 bg-scicyan-500/20 text-scicyan-300 border border-scicyan-400/40">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 id="modal-title" class="text-xl font-bold font-game text-white mb-2">Konfirmasi</h3>
+      <p id="modal-desc" class="text-slate-300 text-xs md:text-sm leading-relaxed mb-6"></p>
+      <div class="flex gap-3 justify-center">
+        <button id="modal-btn-cancel" class="px-5 py-2.5 rounded-xl border border-slate-600 font-bold text-xs text-slate-300 hover:bg-slate-800 transition">Batal</button>
+        <button id="modal-btn-confirm" class="px-5 py-2.5 rounded-xl bg-scicyan-500 hover:bg-scicyan-400 text-labdark-950 font-bold text-xs shadow-lg transition">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="toast-body" class="px-4 py-2.5 rounded-2xl border flex items-center gap-2 text-xs font-semibold shadow-2xl"></div>
+  </div>
+
+  <script>
+    const App = {
+      currentPage: 'dashboard',
+      selectedPkg: 1,
+      playerName: "Finalis Semifinal IPA",
+
+      settings: {
+        sound: true,
+        volume: 0.2
+      },
+
+      activeSession: null,
+      timerInterval: null,
+      lastTimestamp: null,
+      saveIndicatorText: "Tersimpan",
+
+      // Full Review state (Opened after submission)
+      fullReviewRecord: null,
+      fullReviewIndex: 0,
+
+      // Scoreboard Filter & Sort
+      scoreFilter: 'all',
+      scoreSort: 'highest',
+
+      async init() {
+        await LocalDB.init();
+        this.loadSettings();
+        this.bindEvents();
+
+        const recovered = await LocalDB.getAnyActiveSession();
+        if (recovered) {
+          this.showRecoveryDialog(recovered);
+        }
+
+        this.render();
+      },
+
+      loadSettings() {
+        try {
+          const s = localStorage.getItem('YB_SEMI2_SETTINGS');
+          if (s) {
+            this.settings = Object.assign(this.settings, JSON.parse(s));
+            SoundEngine.enabled = this.settings.sound;
+            SoundEngine.volume = this.settings.volume;
+          }
+        } catch(e) {}
+      },
+
+      saveSettings() {
+        try {
+          localStorage.setItem('YB_SEMI2_SETTINGS', JSON.stringify(this.settings));
+          SoundEngine.enabled = this.settings.sound;
+          SoundEngine.volume = this.settings.volume;
+        } catch(e) {}
+      },
+
+      showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        const body = document.getElementById('toast-body');
+        if (!toast || !body) return;
+
+        let icon = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+        let bg = 'bg-labdark-900 border-emerald-500/50 text-white';
+
+        if (type === 'error') {
+          icon = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>';
+          bg = 'bg-labdark-900 border-rose-500/50 text-white';
+        } else if (type === 'info') {
+          icon = '<i class="fa-solid fa-circle-info text-scicyan-400"></i>';
+          bg = 'bg-labdark-900 border-scicyan-500/50 text-white';
+        }
+
+        body.className = `px-4 py-2.5 rounded-2xl border flex items-center gap-2 text-xs font-semibold shadow-2xl ${bg}`;
+        body.innerHTML = `${icon} <span>${msg}</span>`;
+
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2600);
+      },
+
+      bindEvents() {
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden && this.activeSession && !this.activeSession.isPaused && !this.activeSession.isCompleted && this.currentPage === 'exam') {
+            this.pauseSession(true);
+          }
+        });
+
+        window.addEventListener('pagehide', () => {
+          if (this.activeSession && !this.activeSession.isCompleted) {
+            this.activeSession.status = 'paused';
+            this.activeSession.isPaused = true;
+            LocalDB.saveSession(this.activeSession);
+          }
+        });
+
+        window.addEventListener('keydown', (e) => {
+          if (this.currentPage !== 'exam' || !this.activeSession || this.activeSession.isPaused) return;
+
+          const key = e.key.toUpperCase();
+          if (['A', 'B', 'C', 'D'].includes(key)) {
+            this.selectAnswer(key);
+          } else if (e.key === 'ArrowRight') {
+            this.nextQuestion();
+          } else if (e.key === 'ArrowLeft') {
+            this.prevQuestion();
+          }
+        });
+      },
+
+      showRecoveryDialog(sess) {
+        const modal = document.getElementById('recovery-modal');
+        const info = document.getElementById('recovery-info');
+        const btnResume = document.getElementById('recovery-btn-resume');
+        const btnDiscard = document.getElementById('recovery-btn-discard');
+
+        let answered = 0;
+        Object.values(sess.answers || {}).forEach(a => { if (a && a.selected) answered++; });
+        const remainingFormatted = this.formatTime(sess.remainingSeconds || 6000);
+
+        info.innerHTML = `
+          <div class="flex justify-between text-slate-400"><span>Paket Latihan:</span><strong class="text-white">${sess.packageName}</strong></div>
+          <div class="flex justify-between text-slate-400"><span>Posisi Terakhir:</span><strong class="text-scicyan-300">Soal #${(sess.currentQuestion || 0) + 1} dari 40</strong></div>
+          <div class="flex justify-between text-slate-400"><span>Soal Terjawab:</span><strong class="text-emerald-400">${answered} dari 40 Soal</strong></div>
+          <div class="flex justify-between text-slate-400"><span>Sisa Waktu:</span><strong class="font-mono text-accentgold">${remainingFormatted}</strong></div>
+        `;
+
+        modal.classList.remove('hidden');
+
+        btnResume.onclick = () => {
+          modal.classList.add('hidden');
+          this.resumeSession(sess.packageId);
+        };
+
+        btnDiscard.onclick = () => {
+          this.showConfirmModal(
+            "Hapus Sesi Berjalan?",
+            "Sesi ujian ini akan dibatalkan dan dihapus permanen.",
+            async () => {
+              modal.classList.add('hidden');
+              await LocalDB.deleteSession(sess.packageId);
+              this.render();
+            }
+          );
+        };
+      },
+
+      navigate(page, pkgId = null) {
+        SoundEngine.click();
+        if (pkgId !== null) this.selectedPkg = pkgId;
+        this.currentPage = page;
+        window.scrollTo(0, 0);
+        this.render();
+      },
+
+      async startNewSession(pkgId) {
+        const questions = await LocalDB.getQuestions(pkgId);
+        const newSession = {
+          sessionId: `SESS_${pkgId}_${Date.now()}`,
+          packageId: pkgId,
+          packageName: `Paket ${pkgId} Semifinal`,
+          status: 'in_progress',
+          currentIndex: 0,
+          currentQuestion: 0,
+          totalQuestions: questions.length,
+          remainingSeconds: 100 * 60,
+          activeElapsedSeconds: 0,
+          answers: {},
+          isPaused: false,
+          isCompleted: false,
+          startedAt: new Date().toISOString(),
+          lastSavedAt: new Date().toISOString()
+        };
+
+        this.activeSession = newSession;
+        await LocalDB.saveSession(newSession);
+        this.startTimer();
+        this.navigate('exam', pkgId);
+      },
+
+      async resumeSession(pkgId) {
+        const session = await LocalDB.getSession(pkgId);
+        if (session && !session.isCompleted) {
+          this.activeSession = session;
+          this.activeSession.isPaused = false;
+          this.activeSession.status = 'in_progress';
+          await LocalDB.saveSession(this.activeSession);
+          this.startTimer();
+          this.navigate('exam', pkgId);
+        } else {
+          this.startNewSession(pkgId);
+        }
+      },
+
+      startTimer() {
+        this.stopTimer();
+        this.lastTimestamp = Date.now();
+        this.timerInterval = setInterval(async () => {
+          if (!this.activeSession || this.activeSession.isPaused || this.activeSession.isCompleted) return;
+
+          const now = Date.now();
+          const deltaSec = Math.floor((now - this.lastTimestamp) / 1000);
+
+          if (deltaSec >= 1) {
+            this.lastTimestamp = now;
+            if (this.activeSession.remainingSeconds > 0) {
+              const dec = Math.min(deltaSec, this.activeSession.remainingSeconds);
+              this.activeSession.remainingSeconds -= dec;
+              this.activeSession.activeElapsedSeconds += dec;
+
+              if (this.activeSession.activeElapsedSeconds % 5 === 0) {
+                this.updateAutosaveIndicator("Menyimpan...");
+                await LocalDB.saveSession(this.activeSession);
+                this.updateAutosaveIndicator("Tersimpan");
+              }
+
+              const timerEl = document.getElementById('exam-timer-display');
+              if (timerEl) {
+                timerEl.textContent = this.formatTime(this.activeSession.remainingSeconds);
+              }
+            } else {
+              this.handleTimeout();
+            }
+          }
+        }, 500);
+      },
+
+      stopTimer() {
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+        }
+      },
+
+      updateAutosaveIndicator(text) {
+        this.saveIndicatorText = text;
+        const el = document.getElementById('autosave-indicator');
+        if (el) {
+          el.innerHTML = `<i class="fa-solid ${text === 'Menyimpan...' ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up text-emerald-400'}"></i> <span>${text}</span>`;
+        }
+      },
+
+      async pauseSession(silent = false) {
+        if (!this.activeSession || this.activeSession.isPaused) return;
+        if (!silent) SoundEngine.pause();
+        this.stopTimer();
+        this.activeSession.isPaused = true;
+        this.activeSession.status = 'paused';
+        await LocalDB.saveSession(this.activeSession);
+        this.render();
+      },
+
+      async unpauseSession() {
+        if (!this.activeSession) return;
+        SoundEngine.resume();
+        this.activeSession.isPaused = false;
+        this.activeSession.status = 'in_progress';
+        await LocalDB.saveSession(this.activeSession);
+        this.startTimer();
+        this.render();
+      },
+
+      handleTimeout() {
+        this.stopTimer();
+        SoundEngine.wrong();
+        this.finishExam(true);
+      },
+
+      // SELECT OR CHANGE ANSWER (FREELY EDITED BEFORE FINAL SUBMIT)
+      async selectAnswer(optionKey) {
+        if (!this.activeSession || this.activeSession.isCompleted) return;
+        const cIndex = this.activeSession.currentIndex;
+
+        SoundEngine.select();
+        this.activeSession.answers[cIndex] = {
+          selected: optionKey,
+          submitted: true
+        };
+        await LocalDB.saveSession(this.activeSession);
+        this.render();
+      },
+
+      async prevQuestion() {
+        if (!this.activeSession) return;
+        SoundEngine.click();
+        if (this.activeSession.currentIndex > 0) {
+          this.activeSession.currentIndex--;
+          this.activeSession.currentQuestion = this.activeSession.currentIndex;
+          await LocalDB.saveSession(this.activeSession);
+          this.render();
+        }
+      },
+
+      async nextQuestion() {
+        if (!this.activeSession) return;
+        SoundEngine.click();
+        if (this.activeSession.currentIndex < this.activeSession.totalQuestions - 1) {
+          this.activeSession.currentIndex++;
+          this.activeSession.currentQuestion = this.activeSession.currentIndex;
+          await LocalDB.saveSession(this.activeSession);
+          this.render();
+        } else {
+          this.confirmFinishExam();
+        }
+      },
+
+      async goToQuestion(index) {
+        if (!this.activeSession) return;
+        SoundEngine.click();
+        this.activeSession.currentIndex = Math.max(0, Math.min(this.activeSession.totalQuestions - 1, index));
+        this.activeSession.currentQuestion = this.activeSession.currentIndex;
+        await LocalDB.saveSession(this.activeSession);
+        this.render();
+      },
+
+      confirmFinishExam() {
+        if (!this.activeSession) return;
+        SoundEngine.click();
+        let answered = 0;
+        for (let i = 0; i < this.activeSession.totalQuestions; i++) {
+          if (this.activeSession.answers[i] && this.activeSession.answers[i].selected) {
+            answered++;
+          }
+        }
+        const blank = this.activeSession.totalQuestions - answered;
+
+        this.showConfirmModal(
+          "Kumpulkan & Selesaikan Simulasi?",
+          `Anda telah mengisi ${answered} dari 40 soal (${blank} soal belum dijawab). Setelah disubmit, seluruh jawaban akan dinilai dengan skor resmi (+4/-1/0) dan kunci pembahasan lengkap akan dibuka.`,
+          () => this.finishExam(false)
+        );
+      },
+
+      async finishExam(isExpired = false) {
+        this.stopTimer();
+        if (!this.activeSession || this.activeSession.isCompleted) return;
+
+        this.activeSession.isCompleted = true;
+        this.activeSession.status = isExpired ? 'expired' : 'completed';
+        const pkgId = this.activeSession.packageId;
+        const questions = await LocalDB.getQuestions(pkgId);
+
+        let correct = 0, wrong = 0, blank = 0;
+        const finalizedAnswers = {};
+
+        for (let i = 0; i < questions.length; i++) {
+          const q = questions[i];
+          const userEntry = this.activeSession.answers[i];
+          if (userEntry && userEntry.selected) {
+            const isCorrect = userEntry.selected === q.correctAnswer;
+            if (isCorrect) correct++;
+            else wrong++;
+
+            finalizedAnswers[i] = {
+              selected: userEntry.selected,
+              isCorrect: isCorrect,
+              submitted: true
+            };
+          } else {
+            blank++;
+            finalizedAnswers[i] = {
+              selected: null,
+              isCorrect: false,
+              submitted: false
+            };
+          }
+        }
+
+        const finalScore = (correct * 4) - (wrong * 1);
+        const resultRecord = {
+          resultId: `RES_${pkgId}_${Date.now()}`,
+          sessionId: this.activeSession.sessionId,
+          packageId: pkgId,
+          packageName: `Paket ${pkgId} Semifinal`,
+          playerName: this.playerName,
+          correct,
+          wrong,
+          blank,
+          finalScore,
+          durationSeconds: this.activeSession.activeElapsedSeconds,
+          durationFormatted: this.formatTime(this.activeSession.activeElapsedSeconds),
+          startedAt: this.activeSession.startedAt,
+          completedAt: new Date().toLocaleString("id-ID", { dateStyle: 'medium', timeStyle: 'short' }),
+          timestamp: Date.now(),
+          answers: finalizedAnswers,
+          completionStatus: isExpired ? 'expired' : 'completed'
+        };
+
+        await LocalDB.saveFinalResult(resultRecord);
+        await LocalDB.deleteSession(pkgId);
+
+        this.lastRecord = resultRecord;
+        this.activeSession = null;
+        SoundEngine.fanfare();
+        this.navigate('result');
+      },
+
+      formatTime(seconds) {
+        const s = Math.max(0, Math.floor(seconds));
+        const hrs = Math.floor(s / 3600);
+        const mins = Math.floor((s % 3600) / 60);
+        const secs = s % 60;
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      },
+
+      showConfirmModal(title, desc, onConfirm) {
+        const modal = document.getElementById('custom-modal');
+        const t = document.getElementById('modal-title');
+        const d = document.getElementById('modal-desc');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        t.textContent = title;
+        d.textContent = desc;
+        modal.classList.remove('hidden');
+
+        const cleanup = () => {
+          modal.classList.add('hidden');
+          btnConfirm.onclick = null;
+          btnCancel.onclick = null;
+        };
+
+        btnCancel.onclick = () => {
+          SoundEngine.click();
+          cleanup();
+        };
+
+        btnConfirm.onclick = () => {
+          cleanup();
+          onConfirm();
+        };
+      },
+
+      // ==============================================================
+      // RENDER VIEWS
+      // ==============================================================
+      render() {
+        const root = document.getElementById('app');
+        if (!root) return;
+
+        switch (this.currentPage) {
+          case 'prep':
+            root.innerHTML = this.renderPrep();
+            break;
+          case 'exam':
+            this.renderExamAsync();
+            break;
+          case 'result':
+            root.innerHTML = this.renderResult();
+            break;
+          case 'scoreboard':
+          case 'history':
+            this.renderScoreboardAsync();
+            break;
+          case 'fullreview':
+            this.renderFullReviewAsync();
+            break;
+          case 'guide':
+            root.innerHTML = this.renderGuide();
+            break;
+          case 'dashboard':
+          default:
+            this.renderDashboardAsync();
+            break;
+        }
+      },
+
+      // DASHBOARD VIEW (EXACT 2 PACKAGES)
+      async renderDashboardAsync() {
+        const root = document.getElementById('app');
+        if (!root) return;
+
+        const scoreboardList = await LocalDB.getScoreboard();
+        const pkgCards = [];
+
+        for (let p = 1; p <= 2; p++) {
+          const session = await LocalDB.getSession(p);
+          const pkgHistory = scoreboardList.filter(h => h.packageId === p);
+          const bestScore = pkgHistory.length > 0 ? Math.max(...pkgHistory.map(h => h.finalScore)) : null;
+
+          let statusText = "BELUM DIMULAI";
+          let badgeClass = "bg-slate-800 text-slate-300 border-slate-700";
+          let hasActive = false;
+
+          if (session && !session.isCompleted) {
+            statusText = "SEDANG BERLANGSUNG";
+            badgeClass = "bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse";
+            hasActive = true;
+          } else if (pkgHistory.length > 0) {
+            statusText = "SELESAI";
+            badgeClass = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+          }
+
+          pkgCards.push(`
+            <div class="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden flex flex-col justify-between hover:border-scicyan-400 transition-all duration-300 group shadow-2xl">
+              <div class="absolute -right-10 -top-10 w-36 h-36 bg-scicyan-500/10 rounded-full blur-2xl group-hover:bg-scicyan-500/20 transition"></div>
+              
+              <div>
+                <div class="flex items-center justify-between mb-5">
+                  <span class="text-xs font-bold px-3.5 py-1 rounded-full border ${badgeClass}">
+                    ${statusText}
+                  </span>
+                  <span class="text-xs font-mono font-bold text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-regular fa-clock text-scicyan-400"></i> 100 Menit
+                  </span>
+                </div>
+
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-labdark-850 to-labdark-800 border border-scicyan-500/40 flex items-center justify-center text-3xl text-scicyan-300 mb-5 cyan-glow">
+                  <i class="fa-solid ${p === 1 ? 'fa-dna' : 'fa-atom'}"></i>
+                </div>
+
+                <h3 class="text-2xl font-game font-bold text-white mb-1.5">Paket ${p} Semifinal</h3>
+                <p class="text-xs md:text-sm text-scicyan-300 mb-5 font-medium">40 Butir Soal Prediksi HOTS Bertaraf OSN</p>
+
+                <div class="bg-labdark-950/80 rounded-2xl p-4 border border-slate-800 space-y-2 text-xs mb-6">
+                  <div class="flex justify-between text-slate-400">
+                    <span>Komposisi:</span>
+                    <span class="text-white font-medium">20 Hayati + 20 Fisik/Antariksa</span>
+                  </div>
+                  <div class="flex justify-between text-slate-400">
+                    <span>Skor Tertinggi:</span>
+                    <span class="text-accentgold font-bold">${bestScore !== null ? bestScore + ' Poin' : '-'}</span>
+                  </div>
+                  ${hasActive ? `
+                    <div class="flex justify-between text-scicyan-400 pt-2 border-t border-slate-800">
+                      <span>Progres Tersimpan:</span>
+                      <span class="font-bold">Soal #${session.currentIndex + 1} / 40</span>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div>
+                ${hasActive ? `
+                  <div class="grid grid-cols-2 gap-3">
+                    <button onclick="App.resumeSession(${p})" class="py-3.5 rounded-xl bg-accentgold hover:bg-amber-400 text-labdark-950 font-game font-bold text-xs md:text-sm tracking-wide shadow-lg transition flex items-center justify-center gap-1.5">
+                      <i class="fa-solid fa-play"></i> Lanjutkan
+                    </button>
+                    <button onclick="App.confirmRestart(${p})" class="py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-game font-bold text-xs md:text-sm transition">
+                      Mulai Awal
+                    </button>
+                  </div>
+                ` : `
+                  <button onclick="App.navigate('prep', ${p})" class="w-full py-4 rounded-2xl bg-gradient-to-r from-scicyan-500 to-blue-600 hover:from-scicyan-400 hover:to-blue-500 text-labdark-950 font-game font-bold text-sm tracking-wide shadow-lg cyan-glow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gamepad text-base"></i> MULAI LATIHAN SIMULASI
+                  </button>
+                `}
+              </div>
+            </div>
+          `);
+        }
+
+        root.innerHTML = `
+          <div class="min-h-screen flex flex-col justify-between">
+            <header class="w-full max-w-5xl mx-auto px-4 py-5 flex items-center justify-between border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-scicyan-500/20 border border-scicyan-400/50 flex items-center justify-center text-scicyan-400 text-xl cyan-glow">
+                  <i class="fa-solid fa-flask-vial"></i>
+                </div>
+                <div>
+                  <h1 class="text-xl font-tech font-black text-white tracking-wider leading-none">YUK-BELAJAR</h1>
+                  <span class="text-[11px] text-scicyan-400 font-bold tracking-widest uppercase">PREDIKSI SEMIFINAL IPA • 2 PAKET CBT</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 sm:gap-3">
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-[10px] font-mono text-emerald-400">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> IndexedDB Aktif
+                </span>
+                <button onclick="App.toggleSound()" title="Audio ON/OFF" class="w-10 h-10 rounded-xl bg-labdark-850 hover:bg-labdark-800 border border-slate-700 flex items-center justify-center ${this.settings.sound ? 'text-accentgold' : 'text-slate-500'} transition">
+                  <i class="fa-solid ${this.settings.sound ? 'fa-volume-high' : 'fa-volume-xmark'}"></i>
+                </button>
+                <button onclick="App.navigate('guide')" title="Petunjuk Permainan" class="w-10 h-10 rounded-xl bg-labdark-850 hover:bg-labdark-800 border border-slate-700 flex items-center justify-center text-scicyan-400 transition">
+                  <i class="fa-solid fa-circle-question"></i>
+                </button>
+              </div>
+            </header>
+
+            <main class="w-full max-w-5xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center">
+              <div class="text-center max-w-2xl mx-auto mb-10">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-scicyan-500/10 border border-scicyan-400/30 text-scicyan-300 text-xs font-bold mb-4">
+                  <i class="fa-solid fa-trophy text-accentgold"></i> SIMULASI INTENSIF SEMIFINAL IPA SD/MI
+                </div>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-game font-extrabold text-white mb-3 leading-tight">
+                  SIAP MENJADI JUARA OLIMPIADE?
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Selesaikan 2 paket simulasi berstandar HOTS lanjutan. Jawab seluruh soal, ganti jawaban kapan saja sebelum dikumpulkan, dan pelajari kunci serta pembahasannya di akhir sesi!
+                </p>
+              </div>
+
+              <!-- 2 Cards Layout -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 max-w-4xl mx-auto w-full">
+                ${pkgCards.join('')}
+              </div>
+
+              <div class="flex flex-wrap items-center justify-center gap-4">
+                <button onclick="App.navigate('scoreboard')" class="px-6 py-3 rounded-2xl glass-panel hover:bg-labdark-800 text-slate-200 text-xs font-bold font-game flex items-center gap-2 transition shadow-lg">
+                  <i class="fa-solid fa-trophy text-accentgold text-sm"></i> ARENA SCORE BOARD
+                </button>
+                <button onclick="App.navigate('history')" class="px-6 py-3 rounded-2xl glass-panel hover:bg-labdark-800 text-slate-200 text-xs font-bold font-game flex items-center gap-2 transition shadow-lg">
+                  <i class="fa-solid fa-clock-rotate-left text-scicyan-400 text-sm"></i> RIWAYAT LATIHAN
+                </button>
+                <button onclick="App.navigate('guide')" class="px-6 py-3 rounded-2xl glass-panel hover:bg-labdark-800 text-slate-200 text-xs font-bold font-game flex items-center gap-2 transition shadow-lg">
+                  <i class="fa-solid fa-book-open text-emerald-400 text-sm"></i> PETUNJUK PERMAINAN
+                </button>
+                <button onclick="LocalDB.exportBackup()" class="px-5 py-3 rounded-2xl bg-slate-900 border border-slate-700 hover:border-scicyan-500/50 text-slate-300 text-xs font-bold font-game flex items-center gap-2 transition">
+                  <i class="fa-solid fa-download text-accentgold"></i> EXPORT BACKUP
+                </button>
+              </div>
+            </main>
+
+            <footer class="w-full text-center py-4 text-xs text-slate-500 border-t border-slate-800/80">
+              YUK-BELAJAR © 2026 • Simulasi Prediksi Semifinal IPA SD/MI • CBT Edition
+            </footer>
+          </div>
+        `;
+      },
+
+      confirmRestart(pkgId) {
+        SoundEngine.click();
+        this.showConfirmModal(
+          `Mulai Ulang Paket ${pkgId}?`,
+          "Sesi pengerjaan yang tersimpan pada paket ini akan direset dari Soal #1. Riwayat skor akhir di Scoreboard tetap tersimpan aman.",
+          async () => {
+            await LocalDB.deleteSession(pkgId);
+            this.startNewSession(pkgId);
+          }
+        );
+      },
+
+      toggleSound() {
+        this.settings.sound = !this.settings.sound;
+        this.saveSettings();
+        if (this.settings.sound) SoundEngine.click();
+        this.render();
+      },
+
+      // PREPARATION VIEW
+      renderPrep() {
+        return `
+          <div class="min-h-screen flex flex-col justify-center items-center px-4 py-8">
+            <div class="glass-panel rounded-3xl max-w-xl w-full p-6 md:p-8 relative shadow-2xl">
+              <button onclick="App.navigate('dashboard')" class="text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-2 mb-4 transition">
+                <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard
+              </button>
+
+              <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-2xl bg-scicyan-500/20 border border-scicyan-400/40 text-scicyan-300 text-3xl mx-auto flex items-center justify-center mb-3 cyan-glow">
+                  <i class="fa-solid ${this.selectedPkg === 1 ? 'fa-dna' : 'fa-atom'}"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-game font-bold text-white">Simulasi Semifinal: Paket ${this.selectedPkg}</h2>
+                <p class="text-xs text-scicyan-300">Format Ujian CBT Riil (Evaluasi & Pembahasan Muncul di Akhir)</p>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3 text-center mb-6">
+                <div class="bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-3">
+                  <div class="text-xl md:text-2xl font-game font-bold text-emerald-400">+4</div>
+                  <div class="text-[11px] text-emerald-200 font-semibold uppercase">Benar</div>
+                </div>
+                <div class="bg-rose-950/40 border border-rose-500/40 rounded-2xl p-3">
+                  <div class="text-xl md:text-2xl font-game font-bold text-rose-400">-1</div>
+                  <div class="text-[11px] text-rose-200 font-semibold uppercase">Salah</div>
+                </div>
+                <div class="bg-slate-800/40 border border-slate-700 rounded-2xl p-3">
+                  <div class="text-xl md:text-2xl font-game font-bold text-slate-300">0</div>
+                  <div class="text-[11px] text-slate-400 font-semibold uppercase">Kosong</div>
+                </div>
+              </div>
+
+              <div class="bg-labdark-950/80 border border-slate-800 rounded-2xl p-4 text-xs text-slate-300 space-y-2 mb-6">
+                <div class="font-bold text-scicyan-300 flex items-center gap-2 text-sm mb-2">
+                  <i class="fa-solid fa-clipboard-check"></i> Mekanisme Pengerjaan:
+                </div>
+                <ul class="list-disc list-inside space-y-1.5 leading-relaxed">
+                  <li>Total <strong>40 butir soal pilihan ganda</strong> dengan durasi <strong>100 menit</strong>.</li>
+                  <li>Pilih jawaban, lalu tekan tombol <strong>Soal Berikutnya</strong> atau klik langsung nomor soal pada lembar jawaban.</li>
+                  <li><strong>Jawaban bebas diganti kapan saja</strong> sebelum Anda mengklik <em>Kumpulkan Ujian</em>.</li>
+                  <li>Tidak ada kunci atau pembahasan yang muncul saat ujian berlangsung. Semua evaluasi nilai, kunci resmi, dan pembahasan dibuka sekaligus di akhir sesi.</li>
+                </ul>
+              </div>
+
+              <button onclick="App.startNewSession(${this.selectedPkg})" class="w-full py-4 rounded-2xl bg-gradient-to-r from-accentgold to-amber-500 hover:from-amber-400 hover:to-amber-500 text-labdark-950 font-game font-bold text-base shadow-xl gold-glow transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-play text-lg"></i> MULAI UJIAN SEKARANG
+              </button>
+            </div>
+          </div>
+        `;
+      },
+
+      // EXAM VIEW (CBT MODE: REAL TIME NAVIGATION & CHANGING ANSWERS)
+      async renderExamAsync() {
+        const root = document.getElementById('app');
+        if (!root) return;
+
+        const session = this.activeSession;
+        if (!session) {
+          this.navigate('dashboard');
+          return;
+        }
+
+        if (session.isPaused) {
+          root.innerHTML = this.renderPauseOverlay();
+          return;
+        }
+
+        const pkgId = session.packageId;
+        const questions = await LocalDB.getQuestions(pkgId);
+        const totalQ = session.totalQuestions;
+        const cIndex = session.currentIndex;
+        const qData = questions[cIndex];
+        const userAns = session.answers[cIndex] || { selected: null };
+
+        let answeredCount = 0;
+        for (let i = 0; i < totalQ; i++) {
+          if (session.answers[i] && session.answers[i].selected) answeredCount++;
+        }
+        const progressPct = Math.round((answeredCount / totalQ) * 100);
+
+        // Build 1-40 Question Badges Grid
+        const badgesHtml = [];
+        for (let i = 0; i < totalQ; i++) {
+          const a = session.answers[i];
+          const hasAnswer = a && a.selected;
+          const isCurrentActive = i === cIndex;
+
+          let badgeBg = "bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700";
+
+          if (hasAnswer) {
+            badgeBg = "bg-scicyan-500/20 text-scicyan-300 border-scicyan-500/60 font-bold";
+          }
+
+          if (isCurrentActive) {
+            badgeBg = "bg-accentgold text-labdark-950 font-extrabold border-amber-300 ring-2 ring-accentgold scale-105 shadow-md";
+          }
+
+          badgesHtml.push(`
+            <button 
+              type="button"
+              onclick="App.goToQuestion(${i})"
+              title="Soal ${i + 1}${hasAnswer ? ` (Terjawab: ${a.selected})` : ' (Belum dijawab)'}"
+              class="w-8 h-8 rounded-xl border text-xs font-mono font-bold flex items-center justify-center transition-all ${badgeBg}">
+              ${i + 1}
+            </button>
+          `);
+        }
+
+        root.innerHTML = `
+          <div class="min-h-screen bg-labdark-950 text-slate-100 flex flex-col justify-between">
+            <header class="glass-panel sticky top-0 z-20 border-b border-scicyan-500/30">
+              <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="text-xs font-game font-bold bg-scicyan-500/20 text-scicyan-300 border border-scicyan-400/40 px-3 py-1 rounded-xl">
+                    PAKET ${pkgId}
+                  </span>
+                  <div class="font-game font-bold text-sm md:text-base text-white">
+                    SOAL <span class="text-accentgold font-bold">${cIndex + 1}</span> / ${totalQ}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <div id="autosave-indicator" class="hidden md:flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-labdark-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> <span>${this.saveIndicatorText}</span>
+                  </div>
+
+                  <div class="hidden sm:flex items-center gap-2 bg-labdark-900 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold">
+                    <span class="text-slate-400">Terjawab:</span>
+                    <span class="text-scicyan-300 font-bold">${answeredCount} / ${totalQ}</span>
+                  </div>
+
+                  <div class="flex items-center gap-2 bg-labdark-900 border border-scicyan-500/40 px-3.5 py-1.5 rounded-xl font-mono text-scicyan-300 font-bold text-sm md:text-base shadow-inner">
+                    <i class="fa-regular fa-clock text-accentgold animate-pulse"></i>
+                    <span id="exam-timer-display">${this.formatTime(session.remainingSeconds)}</span>
+                  </div>
+
+                  <button onclick="App.pauseSession()" title="Jeda Latihan" class="p-2 rounded-xl bg-labdark-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-pause"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="w-full bg-slate-900 h-1.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-scicyan-400 to-accentgold h-full transition-all duration-300" style="width: ${progressPct}%"></div>
+              </div>
+            </header>
+
+            <main class="w-full max-w-4xl mx-auto px-4 py-6 md:py-8 flex-1 flex flex-col justify-center">
+
+              <div class="flex items-center justify-between text-xs text-slate-400 font-semibold mb-3">
+                <span class="flex items-center gap-2 text-scicyan-400">
+                  <span class="px-2 py-0.5 rounded-lg bg-scicyan-500/10 border border-scicyan-400/30 uppercase text-[10px] font-bold">${qData.type}</span>
+                  <i class="fa-solid fa-tag"></i> ${qData.topic}
+                </span>
+                <span class="text-slate-400">
+                  Status: <strong class="${userAns.selected ? 'text-emerald-400' : 'text-slate-500'}">${userAns.selected ? `Terjawab (${userAns.selected})` : 'Belum Dijawab'}</strong>
+                </span>
+              </div>
+
+              <!-- Question Card -->
+              <div class="glass-panel rounded-3xl p-6 md:p-8 border border-slate-700/80 shadow-2xl mb-6">
+                <div class="text-base md:text-lg font-medium text-slate-100 leading-relaxed whitespace-pre-line mb-6">
+                  ${qData.questionText}
+                </div>
+
+                <div class="space-y-3">
+                  ${['A', 'B', 'C', 'D'].map(key => {
+                    const text = qData.options[key];
+                    if (!text) return '';
+
+                    const isSelected = userAns.selected === key;
+
+                    let btnClass = "border-slate-800 bg-labdark-900/80 hover:bg-labdark-850 hover:border-scicyan-500/50 text-slate-200";
+                    let badgeClass = "bg-slate-800 text-slate-300 border-slate-700";
+
+                    if (isSelected) {
+                      btnClass = "border-scicyan-400 bg-scicyan-500/20 text-white ring-2 ring-scicyan-400/50 cyan-glow";
+                      badgeClass = "bg-scicyan-500 text-labdark-950 font-bold border-scicyan-400";
+                    }
+
+                    return `
+                      <button 
+                        type="button"
+                        onclick="App.selectAnswer('${key}')"
+                        class="w-full text-left p-4 rounded-2xl border transition-all duration-200 flex items-start gap-3 ${btnClass}">
+                        <span class="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-sm font-game border ${badgeClass}">
+                          ${key}
+                        </span>
+                        <span class="text-sm md:text-base leading-snug pt-1 flex-1">${text}</span>
+                        ${isSelected ? '<i class="fa-solid fa-circle-check text-scicyan-400 text-xl pt-1"></i>' : ''}
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- Navigation Controls -->
+              <div class="flex flex-wrap items-center justify-between gap-4 pt-2 mb-8">
+                <div class="flex items-center gap-2">
+                  <button 
+                    onclick="App.prevQuestion()" 
+                    ${cIndex === 0 ? 'disabled' : ''}
+                    class="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-game font-bold text-xs transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Soal Sebelumnya
+                  </button>
+
+                  <button 
+                    onclick="App.nextQuestion()" 
+                    ${cIndex === totalQ - 1 ? 'disabled' : ''}
+                    class="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-game font-bold text-xs transition flex items-center gap-2">
+                    Soal Berikutnya <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+
+                <div>
+                  <button 
+                    onclick="App.confirmFinishExam()" 
+                    class="px-7 py-3 rounded-2xl bg-gradient-to-r from-accentgold to-amber-500 hover:from-amber-400 hover:to-amber-500 text-labdark-950 font-game font-bold text-xs md:text-sm tracking-wide shadow-xl gold-glow transition flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered"></i> KUMPULKAN UJIAN
+                  </button>
+                </div>
+              </div>
+
+              <!-- Badges Grid Drawer (1-40) -->
+              <div class="glass-panel rounded-3xl p-5 border border-slate-800">
+                <div class="flex items-center justify-between mb-3 text-xs">
+                  <span class="font-bold text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-scicyan-400"></i> LEMBAR JAWABAN (1 - 40)
+                  </span>
+                  <div class="flex items-center gap-4 text-[11px]">
+                    <span class="flex items-center gap-1.5 text-scicyan-400 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-scicyan-400"></span> Terjawab</span>
+                    <span class="flex items-center gap-1.5 text-accentgold font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-accentgold"></span> Soal Aktif</span>
+                    <span class="flex items-center gap-1.5 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span> Kosong</span>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-center">
+                  ${badgesHtml.join('')}
+                </div>
+              </div>
+
+            </main>
+          </div>
+        `;
+      },
+
+      // PAUSE SCREEN
+      renderPauseOverlay() {
+        const session = this.activeSession;
+        let answered = 0;
+        for (let i = 0; i < session.totalQuestions; i++) {
+          if (session.answers[i] && session.answers[i].selected) answered++;
+        }
+        const empty = session.totalQuestions - answered;
+
+        return `
+          <div class="min-h-screen bg-labdark-950/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div class="glass-panel bg-labdark-900 border-2 border-scicyan-500/40 rounded-3xl max-w-md w-full p-6 md:p-8 text-center shadow-2xl">
+              <div class="w-20 h-20 rounded-3xl bg-amber-500/20 border-2 border-amber-400/40 text-amber-400 text-3xl mx-auto flex items-center justify-center mb-4 gold-glow">
+                <i class="fa-solid fa-pause"></i>
+              </div>
+              <h2 class="text-2xl font-game font-bold text-white mb-1">UJIAN DIJEDA</h2>
+              <p class="text-xs text-slate-400 mb-6">Waktu hitung mundur dihentikan sementara. Seluruh jawaban Anda tetap tersimpan.</p>
+
+              <div class="bg-labdark-950 rounded-2xl p-4 border border-slate-800 text-xs space-y-2 mb-6 text-left">
+                <div class="flex justify-between text-slate-400"><span>Paket:</span><span class="font-bold text-white">${session.packageName}</span></div>
+                <div class="flex justify-between text-slate-400"><span>Posisi Terakhir:</span><span class="font-bold text-scicyan-300">Soal #${session.currentIndex + 1} dari 40</span></div>
+                <div class="flex justify-between text-slate-400"><span>Soal Terjawab:</span><span class="font-bold text-emerald-400">${answered} Soal</span></div>
+                <div class="flex justify-between text-slate-400"><span>Soal Belum Dijawab:</span><span class="font-bold text-slate-400">${empty} Soal</span></div>
+                <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
+                  <span>Sisa Waktu:</span>
+                  <span class="font-mono font-bold text-accentgold">${this.formatTime(session.remainingSeconds)}</span>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <button onclick="App.unpauseSession()" class="w-full py-3.5 rounded-xl bg-scicyan-500 hover:bg-scicyan-400 text-labdark-950 font-game font-bold text-sm cyan-glow transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-play"></i> LANJUTKAN UJIAN
+                </button>
+                <button onclick="App.navigate('dashboard')" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-game font-bold text-xs transition">
+                  Kembali ke Dashboard Lobby
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      // RESULT VIEW (SHOWING SCORES & BUTTON FOR DETAILED ANSWERS & DISCUSSION)
+      renderResult() {
+        const record = this.lastRecord;
+        if (!record) {
+          this.navigate('dashboard');
+          return '';
+        }
+
+        const pct = Math.round((record.correct / 40) * 100);
+
+        return `
+          <div class="min-h-screen flex flex-col justify-center items-center px-4 py-8">
+            <div class="glass-panel rounded-3xl max-w-lg w-full p-6 md:p-8 text-center relative overflow-hidden shadow-2xl">
+              <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-accentgold to-amber-300 text-labdark-950 text-4xl mx-auto flex items-center justify-center mb-4 gold-glow">
+                <i class="fa-solid fa-trophy"></i>
+              </div>
+
+              <div class="inline-block px-4 py-1 rounded-full bg-scicyan-500/20 border border-scicyan-400/40 text-scicyan-300 text-xs font-bold mb-2">
+                ${record.packageName} SELESAI
+              </div>
+              <h2 class="text-3xl font-game font-extrabold text-white mb-1">HASIL EVALUASI SEMIFINAL</h2>
+              <p class="text-xs text-slate-400 mb-6">Jawaban Anda telah dinilai. Silakan buka kunci dan pembahasan lengkap di bawah ini.</p>
+
+              <div class="bg-labdark-950 border-2 border-scicyan-500/40 rounded-3xl p-6 mb-6 shadow-inner">
+                <div class="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">SKOR AKHIR</div>
+                <div class="text-5xl md:text-6xl font-tech font-black ${record.finalScore >= 0 ? 'text-accentgold' : 'text-rose-400'}">
+                  ${record.finalScore}
+                </div>
+                <div class="text-xs text-slate-400 mt-2">
+                  Akurasi: <strong class="text-white">${pct}%</strong> (${record.correct} dari 40 Soal)
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3">
+                  <div class="text-xl font-game font-bold text-emerald-400">${record.correct}</div>
+                  <div class="text-[11px] text-emerald-200 font-semibold">BENAR (+4)</div>
+                </div>
+                <div class="bg-rose-950/40 border border-rose-500/30 rounded-2xl p-3">
+                  <div class="text-xl font-game font-bold text-rose-400">${record.wrong}</div>
+                  <div class="text-[11px] text-rose-200 font-semibold">SALAH (-1)</div>
+                </div>
+                <div class="bg-slate-800/40 border border-slate-700 rounded-2xl p-3">
+                  <div class="text-xl font-game font-bold text-slate-300">${record.blank}</div>
+                  <div class="text-[11px] text-slate-400 font-semibold">KOSONG (0)</div>
+                </div>
+              </div>
+
+              <div class="text-xs text-slate-400 mb-6 flex justify-between px-2">
+                <span>Durasi: <strong class="text-white">${record.durationFormatted}</strong></span>
+                <span>Waktu Selesai: <strong class="text-white">${record.completedAt}</strong></span>
+              </div>
+
+              <div class="space-y-3">
+                <button onclick="App.openFullReview(App.lastRecord)" class="w-full py-4 rounded-2xl bg-scicyan-500 hover:bg-scicyan-400 text-labdark-950 font-game font-bold text-sm cyan-glow transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-book-open-reader text-lg"></i> BUKA KUNCI & PEMBAHASAN 40 SOAL
+                </button>
+                <button onclick="App.navigate('scoreboard')" class="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-game font-bold text-xs transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-trophy text-accentgold"></i> LIHAT SCORE BOARD
+                </button>
+                <button onclick="App.navigate('dashboard')" class="w-full py-3 rounded-xl bg-transparent hover:bg-slate-800/50 text-slate-400 font-game font-bold text-xs transition">
+                  Kembali ke Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      // COMPLETE POST-EXAM REVIEW WITH OFFICIAL KEYS & SCIENTIFIC EXPLANATIONS
+      async openFullReview(record) {
+        SoundEngine.click();
+        this.fullReviewRecord = record;
+        this.fullReviewIndex = 0;
+        this.navigate('fullreview');
+      },
+
+      async renderFullReviewAsync() {
+        const root = document.getElementById('app');
+        if (!root) return;
+
+        const record = this.fullReviewRecord;
+        if (!record) {
+          this.navigate('dashboard');
+          return;
+        }
+
+        const pkgId = record.packageId;
+        const questions = await LocalDB.getQuestions(pkgId);
+        const cIndex = this.fullReviewIndex;
+        const qData = questions[cIndex];
+        const userAns = record.answers ? record.answers[cIndex] : null;
+
+        const badges = [];
+        for (let i = 0; i < 40; i++) {
+          const a = record.answers ? record.answers[i] : null;
+          let badgeBg = "bg-slate-800 text-slate-400 border-slate-700";
+          let icon = "";
+
+          if (a && a.submitted) {
+            if (a.isCorrect) {
+              badgeBg = "bg-emerald-950 text-emerald-400 border-emerald-500/50";
+              icon = '<i class="fa-solid fa-check text-[9px] ml-0.5"></i>';
+            } else {
+              badgeBg = "bg-rose-950 text-rose-400 border-rose-500/50";
+              icon = '<i class="fa-solid fa-xmark text-[9px] ml-0.5"></i>';
+            }
+          }
+
+          if (i === cIndex) {
+            badgeBg += " ring-2 ring-scicyan-400 scale-110";
+          }
+
+          badges.push(`
+            <button onclick="App.setFullReviewIndex(${i})" class="w-8 h-8 rounded-xl border text-xs font-mono font-bold flex items-center justify-center transition ${badgeBg}">
+              ${i + 1}${icon}
+            </button>
+          `);
+        }
+
+        root.innerHTML = `
+          <div class="min-h-screen bg-labdark-950 text-slate-100 flex flex-col justify-between">
+            <header class="glass-panel sticky top-0 z-20 border-b border-scicyan-500/30">
+              <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+                <button onclick="App.navigate('result')" class="text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                  <i class="fa-solid fa-arrow-left"></i> Kembali ke Hasil
+                </button>
+                <div class="font-game font-bold text-sm text-scicyan-300">
+                  REVIEW LENGKAP: ${record.packageName} (SOAL #${cIndex + 1} / 40)
+                </div>
+                <div class="text-xs font-mono text-slate-400">
+                  Skor: <strong class="${record.finalScore >= 0 ? 'text-accentgold' : 'text-rose-400'}">${record.finalScore}</strong>
+                </div>
+              </div>
+            </header>
+
+            <main class="w-full max-w-3xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center">
+              <div class="mb-4 bg-scicyan-500/10 border border-scicyan-400/30 rounded-2xl p-3 text-xs text-scicyan-300 flex items-center justify-between">
+                <span>EVALUASI AKHIR (READ ONLY)</span>
+                <span class="font-mono">${userAns && userAns.submitted ? (userAns.isCorrect ? '+4 Poin' : '-1 Poin') : '0 Poin (Kosong)'}</span>
+              </div>
+
+              <div class="glass-panel rounded-3xl p-6 md:p-8 mb-6">
+                <div class="text-xs font-bold text-scicyan-400 mb-2 uppercase tracking-wider">${qData.type} • ${qData.topic}</div>
+                <div class="text-base text-slate-100 leading-relaxed mb-6 whitespace-pre-line">${qData.questionText}</div>
+
+                <div class="space-y-3">
+                  ${['A', 'B', 'C', 'D'].map(key => {
+                    const text = qData.options[key];
+                    const isSelected = userAns && userAns.selected === key;
+                    const isCorrectKey = qData.correctAnswer === key;
+
+                    let btnClass = "border-slate-800 bg-labdark-900/60 text-slate-400";
+                    let badgeClass = "bg-slate-800 text-slate-400 border-slate-700";
+
+                    if (isCorrectKey) {
+                      btnClass = "border-emerald-500 bg-emerald-950/40 text-emerald-200 ring-2 ring-emerald-500/40";
+                      badgeClass = "bg-emerald-600 text-white border-emerald-400";
+                    } else if (isSelected && !isCorrectKey) {
+                      btnClass = "border-rose-500 bg-rose-950/40 text-rose-200 ring-2 ring-rose-500/40";
+                      badgeClass = "bg-rose-600 text-white border-rose-400";
+                    }
+
+                    return `
+                      <div class="p-4 rounded-2xl border flex items-start gap-3 ${btnClass}">
+                        <span class="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-sm font-game border ${badgeClass}">
+                          ${key}
+                        </span>
+                        <span class="text-sm leading-snug pt-1 flex-1">${text}</span>
+                        ${isCorrectKey ? '<span class="text-[11px] font-bold text-emerald-400 self-center">KUNCI RESMI</span>' : ''}
+                        ${isSelected && !isCorrectKey ? '<span class="text-[11px] font-bold text-rose-400 self-center">JAWABAN KAMU</span>' : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div class="glass-panel rounded-3xl p-6 mb-6 border-slate-700 bg-labdark-900">
+                <h4 class="text-sm font-bold text-scicyan-300 mb-2 flex items-center gap-2">
+                  <i class="fa-solid fa-lightbulb text-accentgold"></i> Pembahasan Lengkap:
+                </h4>
+                <div class="text-xs md:text-sm text-slate-300 leading-relaxed bg-labdark-950 p-4 rounded-2xl border border-slate-800">
+                  ${qData.explanation}
+                </div>
+              </div>
+
+              <div class="flex justify-between gap-4 mb-8">
+                <button 
+                  onclick="App.setFullReviewIndex(${cIndex - 1})"
+                  ${cIndex === 0 ? 'disabled' : ''}
+                  class="px-6 py-3 rounded-2xl bg-slate-800 disabled:opacity-30 text-white font-game font-bold text-xs transition">
+                  <i class="fa-solid fa-arrow-left mr-1"></i> Soal Sebelumnya
+                </button>
+                <button 
+                  onclick="App.setFullReviewIndex(${cIndex + 1})"
+                  ${cIndex === 39 ? 'disabled' : ''}
+                  class="px-6 py-3 rounded-2xl bg-scicyan-500 disabled:opacity-30 text-labdark-950 font-game font-bold text-xs transition">
+                  Soal Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+              </div>
+
+              <div class="glass-panel rounded-3xl p-5 border border-slate-800">
+                <div class="flex flex-wrap gap-2 justify-center">
+                  ${badges.join('')}
+                </div>
+              </div>
+            </main>
+          </div>
+        `;
+      },
+
+      setFullReviewIndex(idx) {
+        SoundEngine.click();
+        this.fullReviewIndex = Math.max(0, Math.min(39, idx));
+        this.render();
+      },
+
+      // SCOREBOARD & HISTORY VIEW
+      async renderScoreboardAsync() {
+        const root = document.getElementById('app');
+        if (!root) return;
+
+        let history = await LocalDB.getScoreboard();
+
+        if (this.scoreFilter !== 'all') {
+          const p = parseInt(this.scoreFilter);
+          history = history.filter(h => h.packageId === p);
+        }
+
+        if (this.scoreSort === 'highest') {
+          history.sort((a, b) => b.finalScore - a.finalScore || a.durationSeconds - b.durationSeconds);
+        } else if (this.scoreSort === 'newest') {
+          history.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+
+        root.innerHTML = `
+          <div class="min-h-screen flex flex-col justify-between">
+            <header class="w-full max-w-5xl mx-auto px-4 py-5 flex items-center justify-between border-b border-slate-800">
+              <button onclick="App.navigate('dashboard')" class="text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-2 transition">
+                <i class="fa-solid fa-arrow-left"></i> Dashboard
+              </button>
+              <h2 class="text-lg md:text-xl font-game font-bold text-accentgold flex items-center gap-2">
+                <i class="fa-solid fa-trophy"></i> ARENA SCORE BOARD
+              </h2>
+              <div class="flex items-center gap-2">
+                <input type="file" id="import-backup-file" accept=".json" class="hidden" onchange="App.handleImportFile(event)">
+                <button onclick="document.getElementById('import-backup-file').click()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-slate-300 transition">
+                  <i class="fa-solid fa-upload mr-1"></i> Impor
+                </button>
+                <button onclick="LocalDB.exportBackup()" class="px-3 py-1.5 rounded-xl bg-scicyan-500/20 text-scicyan-300 border border-scicyan-500/40 hover:bg-scicyan-500 hover:text-labdark-950 text-xs font-bold transition">
+                  <i class="fa-solid fa-download mr-1"></i> Ekspor
+                </button>
+              </div>
+            </header>
+
+            <main class="w-full max-w-5xl mx-auto px-4 py-8 flex-1">
+              <div class="glass-panel rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-slate-400 uppercase">Filter:</span>
+                  <div class="inline-flex rounded-xl bg-labdark-950 p-1 border border-slate-800">
+                    <button onclick="App.setScoreFilter('all')" class="px-3 py-1 text-xs rounded-lg font-bold transition ${this.scoreFilter === 'all' ? 'bg-scicyan-500 text-labdark-950' : 'text-slate-400 hover:text-white'}">Semua</button>
+                    <button onclick="App.setScoreFilter(1)" class="px-3 py-1 text-xs rounded-lg font-bold transition ${this.scoreFilter === 1 ? 'bg-scicyan-500 text-labdark-950' : 'text-slate-400 hover:text-white'}">Paket 1</button>
+                    <button onclick="App.setScoreFilter(2)" class="px-3 py-1 text-xs rounded-lg font-bold transition ${this.scoreFilter === 2 ? 'bg-scicyan-500 text-labdark-950' : 'text-slate-400 hover:text-white'}">Paket 2</button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-slate-400 uppercase">Urutkan:</span>
+                  <div class="inline-flex rounded-xl bg-labdark-950 p-1 border border-slate-800">
+                    <button onclick="App.setScoreSort('highest')" class="px-3 py-1 text-xs rounded-lg font-bold transition ${this.scoreSort === 'highest' ? 'bg-accentgold text-labdark-950' : 'text-slate-400 hover:text-white'}">
+                      <i class="fa-solid fa-arrow-down-wide-short mr-1"></i> Skor Tertinggi
+                    </button>
+                    <button onclick="App.setScoreSort('newest')" class="px-3 py-1 text-xs rounded-lg font-bold transition ${this.scoreSort === 'newest' ? 'bg-accentgold text-labdark-950' : 'text-slate-400 hover:text-white'}">
+                      <i class="fa-solid fa-clock mr-1"></i> Waktu Terbaru
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              ${history.length === 0 ? `
+                <div class="text-center py-16 glass-panel rounded-3xl max-w-md mx-auto p-8">
+                  <div class="w-16 h-16 rounded-2xl bg-slate-800 text-slate-400 text-3xl mx-auto flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-hourglass-start"></i>
+                  </div>
+                  <h3 class="text-lg font-game font-bold text-white mb-1">BELUM ADA HASIL LATIHAN</h3>
+                  <p class="text-xs text-slate-400 mb-6">Mulai simulasi dan buktikan kemampuanmu di babak semifinal!</p>
+                  <button onclick="App.navigate('dashboard')" class="px-6 py-3 rounded-xl bg-scicyan-500 text-labdark-950 font-game font-bold text-xs cyan-glow transition">
+                    PILIH PAKET LATIHAN
+                  </button>
+                </div>
+              ` : `
+                <div class="glass-panel rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs md:text-sm">
+                      <thead class="bg-labdark-950 text-slate-400 font-bold uppercase text-[11px] border-b border-slate-800">
+                        <tr>
+                          <th class="py-4 px-4">Peringkat</th>
+                          <th class="py-4 px-4">Paket</th>
+                          <th class="py-4 px-4">Waktu Selesai</th>
+                          <th class="py-4 px-4 text-center">Durasi</th>
+                          <th class="py-4 px-4 text-center">Benar</th>
+                          <th class="py-4 px-4 text-center">Salah</th>
+                          <th class="py-4 px-4 text-center">Kosong</th>
+                          <th class="py-4 px-4 text-right">Skor Akhir</th>
+                          <th class="py-4 px-4 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-800 font-medium">
+                        ${history.map((r, idx) => `
+                          <tr class="hover:bg-slate-800/40 transition">
+                            <td class="py-3.5 px-4 font-bold ${idx === 0 ? 'text-accentgold' : 'text-slate-400'}">
+                              ${idx === 0 ? '<i class="fa-solid fa-crown mr-1"></i>' : ''}#${idx + 1}
+                            </td>
+                            <td class="py-3.5 px-4 font-game font-bold text-white">${r.packageName}</td>
+                            <td class="py-3.5 px-4 text-slate-400 text-xs">${r.completedAt}</td>
+                            <td class="py-3.5 px-4 text-center font-mono text-slate-300">${r.durationFormatted}</td>
+                            <td class="py-3.5 px-4 text-center text-emerald-400 font-bold">${r.correct}</td>
+                            <td class="py-3.5 px-4 text-center text-rose-400 font-bold">${r.wrong}</td>
+                            <td class="py-3.5 px-4 text-center text-slate-400">${r.blank}</td>
+                            <td class="py-3.5 px-4 text-right font-tech font-bold text-base ${r.finalScore >= 0 ? 'text-accentgold' : 'text-rose-400'}">
+                              ${r.finalScore}
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                              <button onclick="App.openSavedResultReview('${r.resultId}')" class="px-3 py-1 rounded-lg bg-scicyan-500/20 text-scicyan-300 hover:bg-scicyan-500 hover:text-labdark-950 font-bold text-xs transition">
+                                Review
+                              </button>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `}
+            </main>
+          </div>
+        `;
+      },
+
+      async openSavedResultReview(resultId) {
+        const res = await LocalDB.getResultById(resultId);
+        if (res) {
+          this.openFullReview(res);
+        } else {
+          this.showToast("Catatan hasil tidak ditemukan", "error");
+        }
+      },
+
+      async handleImportFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            await LocalDB.importBackup(e.target.result);
+            this.showToast("Data backup berhasil dipulihkan!");
+            this.render();
+          } catch(err) {
+            this.showToast(err.message, "error");
+          }
+        };
+        reader.readAsText(file);
+      },
+
+      setScoreFilter(filter) {
+        SoundEngine.click();
+        this.scoreFilter = filter;
+        this.render();
+      },
+
+      setScoreSort(sort) {
+        SoundEngine.click();
+        this.scoreSort = sort;
+        this.render();
+      },
+
+      // GUIDE VIEW
+      renderGuide() {
+        return `
+          <div class="min-h-screen flex flex-col justify-between">
+            <header class="w-full max-w-4xl mx-auto px-4 py-6 flex items-center justify-between border-b border-slate-800">
+              <button onclick="App.navigate('dashboard')" class="text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i> Dashboard
+              </button>
+              <h2 class="text-xl font-game font-bold text-scicyan-300 flex items-center gap-2">
+                <i class="fa-solid fa-book-open"></i> PANDUAN SIMULASI CBT
+              </h2>
+              <div class="w-16"></div>
+            </header>
+
+            <main class="w-full max-w-3xl mx-auto px-4 py-8 flex-1">
+              <div class="glass-panel rounded-3xl p-6 md:p-8 space-y-6 text-sm text-slate-300 leading-relaxed shadow-2xl">
+                <div>
+                  <h3 class="text-base font-game font-bold text-white mb-1 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-scicyan-500/20 text-scicyan-300 flex items-center justify-center text-xs">1</span>
+                    Struktur 2 Paket Prediksi
+                  </h3>
+                  <p>Aplikasi ini memuat 2 paket soal prediksi semifinal (@ 40 butir soal, total 80 butir). Soal disusun seimbang antara bidang Hayati/Fisiologi dan Fisik/Kimia/Antariksa berbasis stimulus eksperimen dan penalaran HOTS.</p>
+                </div>
+
+                <div>
+                  <h3 class="text-base font-game font-bold text-white mb-1 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-scicyan-500/20 text-scicyan-300 flex items-center justify-center text-xs">2</span>
+                    Alur Pengerjaan CBT Riil
+                  </h3>
+                  <p>Jawaban yang dipilih akan langsung tersimpan tanpa menampilkan status benar/salah secara langsung. Anda dapat berpindah nomor soal secara bebas dan mengganti pilihan jawaban kapan saja sebelum menekan <strong>Kumpulkan Ujian</strong>.</p>
+                </div>
+
+                <div>
+                  <h3 class="text-base font-game font-bold text-white mb-1 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-accentgold/20 text-accentgold flex items-center justify-center text-xs">3</span>
+                    Aturan Skoring Olimpiade
+                  </h3>
+                  <ul class="list-disc list-inside mt-2 space-y-1">
+                    <li><strong class="text-emerald-400">Jawaban Benar:</strong> +4 Poin</li>
+                    <li><strong class="text-rose-400">Jawaban Salah:</strong> -1 Poin</li>
+                    <li><strong class="text-slate-400">Jawaban Kosong:</strong> 0 Poin</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 class="text-base font-game font-bold text-white mb-1 flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">4</span>
+                    Evaluasi & Pembahasan di Akhir
+                  </h3>
+                  <p>Setelah seluruh soal disubmit atau waktu 100 menit berakhir, sistem akan mengkalkulasi skor akhir dan membuka naskah evaluasi 40 butir lengkap beserta kunci jawaban resmi dan pembahasan ilmiahnya.</p>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 text-center">
+                  <button onclick="App.navigate('dashboard')" class="px-8 py-3.5 rounded-2xl bg-scicyan-500 text-labdark-950 font-game font-bold text-sm cyan-glow transition">
+                    SAYA PAHAM, KEMBALI KE LOBBY
+                  </button>
+                </div>
+              </div>
+            </main>
+          </div>
+        `;
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      App.init();
+    });
+  </script>
+</body>
+</html>
